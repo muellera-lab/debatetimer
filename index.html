@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mueller Debate Timer Web-app</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        .dashboard {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        .controls-group {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        select, label, input {
+            font-size: 1rem;
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
+        select {
+            cursor: pointer;
+        }
+        .total-time-container {
+            text-align: right;
+        }
+        .total-time-label {
+            font-size: 0.9rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .total-time {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #d32f2f;
+            font-family: monospace;
+        }
+        .pf-settings {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .pf-settings h3 {
+            margin-top: 0;
+            font-size: 1.1rem;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 8px;
+        }
+        .pf-settings .input-row {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .pf-settings input {
+            width: 60%;
+        }
+        .section-title {
+            margin-top: 30px;
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+            color: #555;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 5px;
+        }
+        
+        /* Sticky Prep Section */
+        #prep-section {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background-color: #f0f2f5;
+            padding: 15px 0 15px 0;
+            margin-bottom: 10px;
+            box-shadow: 0 10px 10px -10px rgba(0,0,0,0.05);
+        }
+        #prep-section .section-title {
+            margin-top: 0;
+        }
+
+        .stages-container {
+            display: grid;
+            gap: 12px;
+        }
+        .prep-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        @media (max-width: 700px) {
+            .prep-container {
+                grid-template-columns: 1fr;
+            }
+        }
+        .stage-card {
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            padding: 15px 20px 20px 20px; /* Extra bottom padding for the progress bar */
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            transition: all 0.2s ease;
+            border-left: 6px solid #ccc;
+            overflow: hidden;
+        }
+        .stage-card.active {
+            border-left-color: #2196f3;
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.25);
+            transform: scale(1.02);
+            z-index: 10;
+        }
+        .stage-card.next-stage {
+            border-left-color: #ffca28;
+            background: #fffdf5;
+        }
+        .stage-card.completed {
+            opacity: 0.5;
+            filter: grayscale(80%);
+            border-left-color: #4caf50;
+        }
+        .checkmark {
+            display: none;
+            color: #4caf50;
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-right: 15px;
+        }
+        .stage-card.completed .checkmark {
+            display: inline-block;
+        }
+        .stage-info {
+            flex: 1;
+            line-height: 1.4;
+        }
+        .stage-info h3 {
+            margin: 0 0 8px 0;
+            font-size: 1.1rem;
+            font-weight: normal;
+        }
+        .side-badge {
+            font-size: 0.8rem;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-weight: bold;
+            display: inline-block;
+        }
+        .side-badge.pro { background: #e3f2fd; color: #1565c0; }
+        .side-badge.opp { background: #fce4ec; color: #c2185b; }
+        .side-badge.both { background: #e8f5e9; color: #2e7d32; }
+        
+        .stage-timer {
+            font-size: 2.2rem;
+            font-weight: bold;
+            font-family: monospace;
+            margin: 0 20px;
+            width: 100px;
+            text-align: center;
+        }
+        .controls button {
+            padding: 10px 16px;
+            margin-left: 8px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.9rem;
+            transition: opacity 0.2s;
+        }
+        .controls button:hover { opacity: 0.8; }
+        .btn-start { background: #4caf50; color: white; }
+        .btn-pause { background: #ff9800; color: white; }
+        .btn-reset { background: #f44336; color: white; }
+        .btn-global-reset { background: #1976d2; color: white; }
+        
+        .speaker-subtext {
+            font-size: 0.85rem;
+            color: #666;
+            display: block;
+            margin-top: 4px;
+        }
+
+        .judge-script {
+            font-size: 0.85rem;
+            color: #555;
+            font-style: italic;
+            margin-top: 8px;
+            display: block;
+            background: #f9f9f9;
+            padding: 6px 10px;
+            border-radius: 4px;
+            border-left: 3px solid #2196f3;
+        }
+
+        .info-tooltip {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: help;
+            color: #1976d2;
+            background: #e3f2fd;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+        }
+        
+        .info-tooltip .tooltip-text {
+            visibility: hidden;
+            width: 210px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px;
+            position: absolute;
+            z-index: 100;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -105px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.8rem;
+            font-weight: normal;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            pointer-events: none;
+        }
+
+        .info-tooltip .tooltip-text::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #333 transparent transparent transparent;
+        }
+
+        .info-tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* Progress Bar Styles */
+        .progress-bar-bg {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 6px;
+            background-color: #e0e0e0;
+        }
+        .progress-bar-fill {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 6px;
+            background-color: #ccc; 
+            transition: width 1s linear, background-color 0.3s ease;
+        }
+        .stage-card.active .progress-bar-fill {
+            background-color: #2196f3;
+        }
+        .stage-card.paused .progress-bar-fill {
+            background-color: #ff9800;
+        }
+        .stage-card.completed .progress-bar-fill {
+            background-color: #4caf50;
+            width: 0% !important; /* Forces it to empty when completed */
+        }
+
+        /* Mobile Scaling Adjustments */
+        @media (max-width: 768px) {
+            .pf-settings {
+                grid-template-columns: 1fr;
+            }
+            .pf-settings .input-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+            }
+            .pf-settings input, .pf-settings select, #t2-side-display {
+                width: 100% !important;
+                box-sizing: border-box;
+            }
+            .header {
+                flex-direction: column;
+                gap: 15px;
+            }
+            .controls-group {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            .total-time-container {
+                text-align: center;
+            }
+            .stage-card {
+                display: grid;
+                grid-template-columns: auto 1fr;
+                grid-template-areas: 
+                    "check info"
+                    "timer controls";
+                gap: 15px 10px;
+                padding: 15px;
+                padding-bottom: 20px;
+            }
+            .checkmark {
+                grid-area: check;
+                margin-right: 0;
+            }
+            .stage-card.completed .checkmark {
+                display: block;
+            }
+            .stage-info {
+                grid-area: info;
+            }
+            .stage-timer {
+                grid-area: timer;
+                margin: 0;
+                text-align: left;
+            }
+            .controls {
+                grid-area: controls;
+                display: flex;
+                justify-content: flex-end;
+            }
+            .controls button {
+                padding: 8px 12px;
+                margin-left: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="dashboard">
+    <div class="header">
+        <div class="controls-group">
+            <select id="format-select" onchange="changeFormat()">
+                <option value="pf">Public Forum</option>
+                <option value="ld">Lincoln-Douglas</option>
+                <option value="extemp">Extemporaneous Debate</option>
+            </select>
+            <label style="border: none; padding: 0; display: flex; align-items: center; gap: 6px;">
+                <input type="checkbox" id="bell-toggle" checked> Enable Bells
+                <span class="info-tooltip">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                    <span class="tooltip-text">Plays a single bell at 30 seconds remaining, and a double bell when time is up.</span>
+                </span>
+            </label>
+            <button class="btn-global-reset" onclick="globalReset()">Global Reset</button>
+        </div>
+        <div class="total-time-container">
+            <div class="total-time-label">Total Round Time Left</div>
+            <div class="total-time" id="total-time">00:00</div>
+        </div>
+    </div>
+
+    <!-- Public Forum Settings -->
+    <div id="pf-settings-container" class="pf-settings" style="display: none;">
+        <div>
+            <h3>Team 1 (First Speaking Team)</h3>
+            <div class="input-row">
+                <label>Side:</label>
+                <select id="t1-side" onchange="updatePFNames()" style="width: 60%;">
+                    <option value="Affirmative">Affirmative</option>
+                    <option value="Negative">Negative</option>
+                </select>
+            </div>
+            <div class="input-row">
+                <label>Speaker 1:</label>
+                <input type="text" id="t1s1" placeholder="Name" oninput="updatePFNames()">
+            </div>
+            <div class="input-row">
+                <label>Speaker 3:</label>
+                <input type="text" id="t1s2" placeholder="Name" oninput="updatePFNames()">
+            </div>
+        </div>
+        <div>
+            <h3>Team 2 (Second Speaking Team)</h3>
+            <div class="input-row">
+                <label>Side:</label>
+                <span id="t2-side-display" style="font-weight:bold; width: 60%; display:inline-block; padding:8px;">Negative</span>
+            </div>
+            <div class="input-row">
+                <label>Speaker 2:</label>
+                <input type="text" id="t2s1" placeholder="Name" oninput="updatePFNames()">
+            </div>
+            <div class="input-row">
+                <label>Speaker 4:</label>
+                <input type="text" id="t2s2" placeholder="Name" oninput="updatePFNames()">
+            </div>
+        </div>
+    </div>
+
+    <div id="prep-section" style="display: none;">
+        <div class="section-title">Preparation Time Pools</div>
+        <div class="prep-container" id="prep-container"></div>
+    </div>
+
+    <div class="section-title">Round Sequence</div>
+    <div class="stages-container" id="stages-container"></div>
+    
+    <p style="text-align: center; color: #888; font-size: 0.9rem; margin-top: 30px;">
+        Keyboard Shortcut: Press <strong>Spacebar</strong> to quickly Pause/Resume the active timer.
+    </p>
+</div>
+
+<script>
+    const formats = {
+        "ld": {
+            stages: [
+                { name: "<strong>Affirmative</strong> Constructive", side: "Aff", minutes: 6, script: "Affirmative, you have 6 minutes for your Constructive." },
+                { name: "<strong>Cross-Examination</strong>", side: "Neg", minutes: 3, script: "Negative, you have 3 minutes for Cross-Examination." },
+                { name: "<strong>Negative</strong> Constructive", side: "Neg", minutes: 7, script: "Negative, you have 7 minutes for your Constructive." },
+                { name: "<strong>Cross-Examination</strong>", side: "Aff", minutes: 3, script: "Affirmative, you have 3 minutes for Cross-Examination." },
+                { name: "<strong>Affirmative</strong> Rebuttal 1", side: "Aff", minutes: 4, script: "Affirmative, you have 4 minutes for your first Rebuttal." },
+                { name: "<strong>Negative</strong> Rebuttal", side: "Neg", minutes: 6, script: "Negative, you have 6 minutes for your Rebuttal." },
+                { name: "<strong>Affirmative</strong> Rebuttal 2", side: "Aff", minutes: 3, script: "Affirmative, you have 3 minutes for your second Rebuttal." }
+            ],
+            prep: [
+                { name: "Affirmative Prep Time", side: "Aff", minutes: 4 },
+                { name: "Negative Prep Time", side: "Neg", minutes: 4 }
+            ]
+        },
+        "extemp": {
+            stages: [
+                { name: "<strong>Affirmative</strong> Constructive", side: "Affirmative", minutes: 2, script: "Affirmative, you have 2 minutes for your Constructive." },
+                { name: "<strong>Cross-Examination</strong> of Aff", side: "Negative", minutes: 1, script: "Negative, you have 1 minute to cross-examine the Affirmative." },
+                { name: "<strong>Negative</strong> Constructive", side: "Negative", minutes: 2, script: "Negative, you have 2 minutes for your Constructive." },
+                { name: "<strong>Cross-Examination</strong> of Neg", side: "Affirmative", minutes: 1, script: "Affirmative, you have 1 minute to cross-examine the Negative." },
+                { name: "<strong>Mandatory Prep Time</strong>", side: "Both", minutes: 1, script: "Both teams have 1 minute of mandatory prep time." },
+                { name: "<strong>Affirmative</strong> Rebuttal", side: "Affirmative", minutes: 2, script: "Affirmative, you have 2 minutes for your Rebuttal." },
+                { name: "<strong>Negative</strong> Rebuttal", side: "Negative", minutes: 2, script: "Negative, you have 2 minutes for your Rebuttal." },
+                { name: "<strong>Mandatory Prep Time</strong>", side: "Both", minutes: 1, script: "Both teams have 1 minute of mandatory prep time." },
+                { name: "<strong>Affirmative</strong> Final Rebuttal", side: "Affirmative", minutes: 2, script: "Affirmative, you have 2 minutes for your Final Rebuttal." },
+                { name: "<strong>Negative</strong> Final Rebuttal", side: "Negative", minutes: 2, script: "Negative, you have 2 minutes for your Final Rebuttal." }
+            ],
+            prep: [] 
+        }
+    };
+
+    let appData = {
+        stages: [],
+        prepPools: [],
+        activeStageId: null,
+        interval: null
+    };
+
+    let audioCtx;
+
+    function getPFStages() {
+        let t1side = document.getElementById('t1-side') ? document.getElementById('t1-side').value : "Affirmative";
+        let t2side = t1side === "Affirmative" ? "Negative" : "Affirmative";
+        
+        if(document.getElementById('t2-side-display')) {
+            document.getElementById('t2-side-display').innerText = t2side;
+        }
+
+        let t1s1 = document.getElementById('t1s1') && document.getElementById('t1s1').value ? document.getElementById('t1s1').value : "Speaker 1";
+        let t1s2 = document.getElementById('t1s2') && document.getElementById('t1s2').value ? document.getElementById('t1s2').value : "Speaker 3";
+        let t2s1 = document.getElementById('t2s1') && document.getElementById('t2s1').value ? document.getElementById('t2s1').value : "Speaker 2";
+        let t2s2 = document.getElementById('t2s2') && document.getElementById('t2s2').value ? document.getElementById('t2s2').value : "Speaker 4";
+
+        return {
+            stages: [
+                { name: `<strong>${t1side}</strong> Constructive<span class="speaker-subtext">${t1s1}</span>`, side: t1side, minutes: 4, script: `${t1side} (${t1s1}), you have 4 minutes for your Constructive.` },
+                { name: `<strong>${t2side}</strong> Constructive<span class="speaker-subtext">${t2s1}</span>`, side: t2side, minutes: 4, script: `${t2side} (${t2s1}), you have 4 minutes for your Constructive.` },
+                { name: `<strong>Crossfire</strong><span class="speaker-subtext">${t1s1} & ${t2s1}</span>`, side: "Both", minutes: 3, script: `${t1side} (${t1s1}) and ${t2side} (${t2s1}), you have 3 minutes for Crossfire.` },
+                { name: `<strong>${t1side}</strong> Rebuttal<span class="speaker-subtext">${t1s2}</span>`, side: t1side, minutes: 4, script: `${t1side} (${t1s2}), you have 4 minutes for your Rebuttal.` },
+                { name: `<strong>${t2side}</strong> Rebuttal<span class="speaker-subtext">${t2s2}</span>`, side: t2side, minutes: 4, script: `${t2side} (${t2s2}), you have 4 minutes for your Rebuttal.` },
+                { name: `<strong>Crossfire</strong><span class="speaker-subtext">${t1s2} & ${t2s2}</span>`, side: "Both", minutes: 3, script: `${t1side} (${t1s2}) and ${t2side} (${t2s2}), you have 3 minutes for Crossfire.` },
+                { name: `<strong>${t1side}</strong> Summary<span class="speaker-subtext">${t1s1}</span>`, side: t1side, minutes: 3, script: `${t1side} (${t1s1}), you have 3 minutes for your Summary.` },
+                { name: `<strong>${t2side}</strong> Summary<span class="speaker-subtext">${t2s1}</span>`, side: t2side, minutes: 3, script: `${t2side} (${t2s1}), you have 3 minutes for your Summary.` },
+                { name: `<strong>Grand Crossfire</strong><span class="speaker-subtext">All Speakers</span>`, side: "Both", minutes: 3, script: `All speakers, you have 3 minutes for Grand Crossfire.` },
+                { name: `<strong>${t1side}</strong> Final Focus<span class="speaker-subtext">${t1s2}</span>`, side: t1side, minutes: 2, script: `${t1side} (${t1s2}), you have 2 minutes for your Final Focus.` },
+                { name: `<strong>${t2side}</strong> Final Focus<span class="speaker-subtext">${t2s2}</span>`, side: t2side, minutes: 2, script: `${t2side} (${t2s2}), you have 2 minutes for your Final Focus.` }
+            ],
+            prep: [
+                { name: `${t1side} Prep Time`, side: t1side, minutes: 3 },
+                { name: `${t2side} Prep Time`, side: t2side, minutes: 3 }
+            ]
+        };
+    }
+
+    function initAudio() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+    }
+
+    function playBell(times) {
+        if (!document.getElementById('bell-toggle').checked) return;
+        
+        for (let i = 0; i < times; i++) {
+            setTimeout(() => {
+                const osc = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                osc.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+                
+                gainNode.gain.setValueAtTime(1, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1.5);
+                
+                osc.start(audioCtx.currentTime);
+                osc.stop(audioCtx.currentTime + 1.5);
+            }, i * 600);
+        }
+    }
+
+    function formatTime(seconds) {
+        let m = Math.floor(seconds / 60).toString().padStart(2, '0');
+        let s = (seconds % 60).toString().padStart(2, '0');
+        return `${m}:${s}`;
+    }
+
+    function getSideClass(side) {
+        let lower = side.toLowerCase();
+        if (lower.includes('pro') || lower.includes('aff')) return 'pro';
+        if (lower.includes('con') || lower.includes('neg') || lower.includes('opp')) return 'opp';
+        return 'both';
+    }
+
+    function calculateTotalTime() {
+        return appData.stages.reduce((total, stage) => total + stage.timeRemaining, 0);
+    }
+
+    function loadFormat(formatKey) {
+        if (appData.interval) {
+            clearInterval(appData.interval);
+            appData.interval = null;
+        }
+        appData.activeStageId = null;
+        
+        if (formatKey === 'pf') {
+            document.getElementById('pf-settings-container').style.display = 'grid';
+        } else {
+            document.getElementById('pf-settings-container').style.display = 'none';
+        }
+        
+        let format = formatKey === 'pf' ? getPFStages() : formats[formatKey];
+        
+        appData.stages = format.stages.map((s, i) => ({
+            id: 'stage_' + i,
+            name: s.name,
+            side: s.side,
+            durationSeconds: s.minutes * 60,
+            timeRemaining: s.minutes * 60,
+            status: 'pending',
+            script: s.script
+        }));
+        
+        if (format.prep && format.prep.length > 0) {
+            appData.prepPools = format.prep.map((p, i) => ({
+                id: 'prep_' + i,
+                name: p.name,
+                side: p.side,
+                durationSeconds: p.minutes * 60,
+                timeRemaining: p.minutes * 60,
+                status: 'pending',
+                script: p.script
+            }));
+            document.getElementById('prep-section').style.display = 'block';
+        } else {
+            appData.prepPools = [];
+            document.getElementById('prep-section').style.display = 'none';
+        }
+        
+        renderUI();
+    }
+
+    function updatePFNames() {
+        if (document.getElementById('format-select').value === 'pf') {
+            let pfFormat = getPFStages();
+            appData.stages.forEach((s, i) => {
+                s.name = pfFormat.stages[i].name;
+                s.side = pfFormat.stages[i].side;
+                s.script = pfFormat.stages[i].script;
+            });
+            appData.prepPools.forEach((p, i) => {
+                p.name = pfFormat.prep[i].name;
+                p.side = pfFormat.prep[i].side;
+                p.script = pfFormat.prep[i].script;
+            });
+            renderUI();
+        }
+    }
+
+    function changeFormat() {
+        const selected = document.getElementById('format-select').value;
+        loadFormat(selected);
+    }
+
+    function tick() {
+        let currentTimer = appData.stages.find(s => s.id === appData.activeStageId) || 
+                           appData.prepPools.find(p => p.id === appData.activeStageId);
+        
+        if (currentTimer && currentTimer.timeRemaining > 0) {
+            currentTimer.timeRemaining--;
+            
+            if (currentTimer.timeRemaining === 30) {
+                playBell(1);
+            }
+            if (currentTimer.timeRemaining === 0) {
+                playBell(2);
+                currentTimer.status = 'completed';
+                clearInterval(appData.interval);
+                appData.interval = null;
+                appData.activeStageId = null;
+            }
+            renderUI();
+        }
+    }
+
+    function toggleTimer(id) {
+        initAudio(); 
+        
+        let target = appData.stages.find(s => s.id === id) || appData.prepPools.find(p => p.id === id);
+        
+        if (appData.activeStageId === id && appData.interval) {
+            clearInterval(appData.interval);
+            appData.interval = null;
+            target.status = 'paused';
+        } else {
+            if (appData.interval) clearInterval(appData.interval);
+            
+            let prev = [...appData.stages, ...appData.prepPools].find(s => s.id === appData.activeStageId);
+            if (prev && prev.timeRemaining > 0) prev.status = 'paused';
+            
+            target.status = 'active';
+            appData.activeStageId = id;
+            appData.interval = setInterval(tick, 1000);
+        }
+        renderUI();
+    }
+
+    function resetTimer(id) {
+        let target = appData.stages.find(s => s.id === id) || appData.prepPools.find(p => p.id === id);
+        target.timeRemaining = target.durationSeconds;
+        target.status = 'pending';
+        
+        if (appData.activeStageId === id) {
+            clearInterval(appData.interval);
+            appData.interval = null;
+            appData.activeStageId = null;
+        }
+        renderUI();
+    }
+
+    function globalReset() {
+        if (confirm("Are you sure you want to completely reset the round?")) {
+            if (appData.interval) {
+                clearInterval(appData.interval);
+                appData.interval = null;
+            }
+            appData.activeStageId = null;
+            
+            appData.stages.forEach(s => {
+                s.timeRemaining = s.durationSeconds;
+                s.status = 'pending';
+            });
+            appData.prepPools.forEach(p => {
+                p.timeRemaining = p.durationSeconds;
+                p.status = 'pending';
+            });
+            
+            if (document.getElementById('format-select').value === 'pf') {
+                document.getElementById('t1s1').value = "";
+                document.getElementById('t1s2').value = "";
+                document.getElementById('t2s1').value = "";
+                document.getElementById('t2s2').value = "";
+                updatePFNames();
+            } else {
+                renderUI();
+            }
+        }
+    }
+
+    function renderUI() {
+        let foundNext = false;
+        appData.stages.forEach(s => {
+            s.isNext = false;
+            if (s.status !== 'completed' && !foundNext) {
+                s.isNext = true;
+                foundNext = true;
+            }
+        });
+
+        let prepContainer = document.getElementById('prep-container');
+        prepContainer.innerHTML = appData.prepPools.map(p => {
+            let pct = (p.timeRemaining / p.durationSeconds) * 100;
+            return `
+            <div class="stage-card ${p.status}">
+                <div class="progress-bar-bg"></div>
+                <div class="progress-bar-fill" style="width: ${pct}%"></div>
+                <div class="checkmark">✓</div>
+                <div class="stage-info">
+                    <h3>${p.name}</h3>
+                    <span class="side-badge ${getSideClass(p.side)}">${p.side}</span>
+                    ${p.script ? `<span class="judge-script">"${p.script}"</span>` : ''}
+                </div>
+                <div class="stage-timer">${formatTime(p.timeRemaining)}</div>
+                <div class="controls">
+                    <button class="${appData.activeStageId === p.id && appData.interval ? 'btn-pause' : 'btn-start'}" 
+                            onclick="toggleTimer('${p.id}')">
+                        ${appData.activeStageId === p.id && appData.interval ? 'Pause' : 'Start'}
+                    </button>
+                    <button class="btn-reset" onclick="resetTimer('${p.id}')">Reset</button>
+                </div>
+            </div>
+            `;
+        }).join('');
+
+        let stagesContainer = document.getElementById('stages-container');
+        stagesContainer.innerHTML = appData.stages.map((s, i) => {
+            let pct = (s.timeRemaining / s.durationSeconds) * 100;
+            return `
+            <div class="stage-card ${s.status} ${s.isNext && s.status !== 'active' ? 'next-stage' : ''}">
+                <div class="progress-bar-bg"></div>
+                <div class="progress-bar-fill" style="width: ${pct}%"></div>
+                <div class="checkmark">✓</div>
+                <div class="stage-info">
+                    <h3>${i + 1}. ${s.name}</h3>
+                    <span class="side-badge ${getSideClass(s.side)}">${s.side}</span>
+                    ${s.script ? `<span class="judge-script">"${s.script}"</span>` : ''}
+                </div>
+                <div class="stage-timer">${formatTime(s.timeRemaining)}</div>
+                <div class="controls">
+                    <button class="${appData.activeStageId === s.id && appData.interval ? 'btn-pause' : 'btn-start'}" 
+                            onclick="toggleTimer('${s.id}')">
+                        ${appData.activeStageId === s.id && appData.interval ? 'Pause' : 'Start'}
+                    </button>
+                    <button class="btn-reset" onclick="resetTimer('${s.id}')">Reset</button>
+                </div>
+            </div>
+            `;
+        }).join('');
+
+        document.getElementById('total-time').innerText = formatTime(calculateTotalTime());
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.code === 'Space' && appData.activeStageId) {
+            const tag = e.target.tagName.toUpperCase();
+            if (tag !== 'INPUT' && tag !== 'SELECT' && tag !== 'BUTTON') {
+                e.preventDefault();
+                toggleTimer(appData.activeStageId);
+            }
+        }
+    });
+
+    window.onload = () => {
+        loadFormat('pf'); 
+    };
+</script>
+
+</body>
+</html>
