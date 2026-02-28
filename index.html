@@ -3,790 +3,2501 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mueller Debate Timer Web-app</title>
+    <title>Mueller Debate Timer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600;700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --bg: #1c2132;
+            --surface: #252c3f;
+            --surface2: #2c3450;
+            --surface3: #323c5a;
+            --border: rgba(255,255,255,0.12);
+            --border-bright: rgba(255,255,255,0.22);
+            --gold: #f0b429;
+            --gold-dim: rgba(240,180,41,0.15);
+            --gold-glow: rgba(240,180,41,0.35);
+            --blue: #5a9fe8;
+            --blue-dim: rgba(90,159,232,0.15);
+            --blue-glow: rgba(90,159,232,0.4);
+            --green: #34c77b;
+            --green-dim: rgba(52,199,123,0.12);
+            --red: #f0524f;
+            --red-dim: rgba(240,82,79,0.15);
+            --red-glow: rgba(240,82,79,0.4);
+            --purple: #b89ffc;
+            --purple-dim: rgba(184,159,252,0.15);
+            --teal: #2dd4bf;
+            --text: #edf0f7;
+            --text-dim: #aab3d0;
+            --text-muted: #7a87a8;
+            --mono: 'JetBrains Mono', monospace;
+            --sans: 'Instrument Sans', sans-serif;
+            --display: 'Syne', sans-serif;
+            --radius: 12px;
+            --radius-sm: 8px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #f0f2f5;
-            color: #333;
-            margin: 0;
-            padding: 20px;
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--sans);
+            min-height: 100vh;
+            overflow-x: hidden;
         }
-        .dashboard {
-            max-width: 900px;
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: 
+                radial-gradient(ellipse 60% 40% at 10% 0%, rgba(90,159,232,0.08) 0%, transparent 60%),
+                radial-gradient(ellipse 40% 30% at 90% 100%, rgba(240,180,41,0.07) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .app {
+            position: relative;
+            z-index: 1;
+            max-width: 960px;
             margin: 0 auto;
+            padding: 24px 20px 60px;
         }
-        .header {
+
+        /* ─── HEADER ─── */
+        .topbar {
             display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 28px;
             flex-wrap: wrap;
-            justify-content: space-between;
-            align-items: center;
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            margin-bottom: 20px;
         }
-        .controls-group {
-            display: flex;
-            gap: 15px;
-            align-items: center;
+
+        .wordmark {
+            font-family: var(--display);
+            font-weight: 800;
+            font-size: 1.3rem;
+            letter-spacing: -0.02em;
+            color: var(--text);
+            flex-shrink: 0;
         }
-        select, label, input {
-            font-size: 1rem;
-            padding: 8px;
-            border-radius: 6px;
-            border: 1px solid #ccc;
+
+        .wordmark span {
+            color: var(--gold);
         }
-        select {
+
+        .topbar-divider {
+            width: 1px;
+            height: 28px;
+            background: var(--border-bright);
+            flex-shrink: 0;
+        }
+
+        .format-select-wrap {
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .format-select-wrap select {
+            appearance: none;
+            background: var(--surface2);
+            border: 1px solid var(--border-bright);
+            border-radius: 100px;
+            color: var(--text);
+            font-family: var(--sans);
+            font-size: 0.85rem;
+            font-weight: 600;
+            padding: 8px 36px 8px 16px;
             cursor: pointer;
+            outline: none;
+            transition: border-color 0.2s;
+            min-width: 200px;
         }
-        .total-time-container {
-            text-align: right;
+
+        .format-select-wrap select:focus {
+            border-color: var(--gold);
         }
-        .total-time-label {
-            font-size: 0.9rem;
-            color: #666;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+
+        .format-select-wrap::after {
+            content: '▾';
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gold);
+            font-size: 0.85rem;
+            pointer-events: none;
         }
-        .total-time {
-            font-size: 2rem;
-            font-weight: bold;
-            color: #d32f2f;
-            font-family: monospace;
+
+        .format-select-wrap select option,
+        .format-select-wrap select optgroup {
+            background: var(--surface2);
+            color: var(--text);
+            font-weight: normal;
         }
-        .pf-settings {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+
+        .format-select-wrap select optgroup {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+        }
+
+        .format-select-wrap.locked {
+            opacity: 0.55;
+        }
+
+        /* keep old pill styles for reference but hide */
+        .format-pill { display: none; }
+
+
+        .topbar-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-left: auto;
+            flex-wrap: wrap;
+        }
+
+        .toggle-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 100px;
+            padding: 6px 14px;
+        }
+
+        .toggle-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-dim);
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .toggle-item input[type="checkbox"] {
+            display: none;
+        }
+
+        .toggle-switch {
+            width: 28px;
+            height: 16px;
+            background: var(--surface3);
+            border-radius: 100px;
+            position: relative;
+            transition: background 0.2s;
+            flex-shrink: 0;
+            border: 1px solid var(--border-bright);
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 10px;
+            height: 10px;
+            background: var(--text-muted);
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+
+        .toggle-item input:checked ~ .toggle-switch {
+            background: var(--gold);
+            border-color: var(--gold);
+        }
+
+        .toggle-item input:checked ~ .toggle-switch::after {
+            left: 14px;
+            background: #0a0c12;
+        }
+
+        .toggle-item input:checked ~ span {
+            color: var(--gold);
+        }
+
+        .btn {
+            border: none;
+            border-radius: var(--radius-sm);
+            font-family: var(--sans);
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
+            padding: 8px 14px;
+            transition: all 0.2s;
+            letter-spacing: 0.01em;
+        }
+
+        .btn-ghost {
+            background: var(--surface2);
+            color: var(--text-dim);
+            border: 1px solid var(--border);
+        }
+
+        .btn-ghost:hover { color: var(--text); border-color: var(--border-bright); }
+
+        .btn-danger-ghost {
+            background: transparent;
+            color: var(--red);
+            border: 1px solid rgba(240,82,79,0.3);
+        }
+
+        .btn-danger-ghost:hover { background: var(--red-dim); }
+
+        /* ─── TOTAL TIME BANNER ─── */
+        .time-banner {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 18px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .time-banner::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            width: 3px;
+            background: var(--gold);
+        }
+
+        .time-banner-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+
+        .time-banner-values {
+            display: flex;
+            align-items: baseline;
+            gap: 12px;
+        }
+
+        .time-banner-main {
+            font-family: var(--mono);
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--gold);
+            letter-spacing: -0.02em;
+            line-height: 1;
+        }
+
+        .time-banner-prep {
+            font-family: var(--mono);
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        /* ─── STICKY MINI TIMER ─── */
+        .sticky-timer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 900;
+            background: rgba(28, 33, 50, 0.92);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-bright);
+            padding: 8px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transform: translateY(-100%);
+            transition: transform 0.25s ease;
+        }
+
+        .sticky-timer.visible {
+            transform: translateY(0);
+        }
+
+        .sticky-timer-label {
+            font-size: 0.65rem;
+            font-weight: 600;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+
+        .sticky-timer-value {
+            font-family: var(--mono);
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--gold);
+            letter-spacing: -0.02em;
+        }
+
+        .sticky-timer-prep {
+            font-family: var(--mono);
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-left: 8px;
+        }
+
+        /* ─── PF SETTINGS ─── */
+        .pf-panel {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .pf-panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.15s;
+        }
+
+        .pf-panel-header:hover { background: rgba(255,255,255,0.02); }
+
+        .pf-panel-title {
+            font-family: var(--display);
+            font-weight: 700;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .pf-panel-title .badge-opt {
+            font-family: var(--sans);
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            background: var(--surface3);
+            padding: 2px 8px;
+            border-radius: 100px;
+        }
+
+        .pf-caret {
+            color: var(--text-muted);
+            transition: transform 0.3s;
+        }
+
+        .pf-body {
+            display: none;
+            border-top: 1px solid var(--border);
+        }
+
+        .pf-body-inner {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px;
+            gap: 0;
         }
-        .pf-settings h3 {
-            margin-top: 0;
-            font-size: 1.1rem;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 8px;
-        }
-        .pf-settings .input-row {
-            margin-bottom: 10px;
+
+        .pf-coin-bar {
+            grid-column: 1 / -1;
+            padding: 16px 20px;
             display: flex;
             align-items: center;
             justify-content: space-between;
+            border-bottom: 1px solid var(--border);
         }
-        .pf-settings input {
-            width: 60%;
+
+        .pf-coin-bar span {
+            font-size: 0.85rem;
+            color: var(--text-dim);
         }
-        .section-title {
-            margin-top: 30px;
+
+        .btn-coin {
+            background: linear-gradient(135deg, #f0b429, #e09a10);
+            color: #0a0c12;
+            border: none;
+            border-radius: var(--radius-sm);
+            padding: 8px 16px;
+            font-family: var(--sans);
+            font-weight: 700;
+            font-size: 0.8rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(240,180,41,0.25);
+        }
+
+        .btn-coin:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(240,180,41,0.35); }
+
+        .pf-team {
+            padding: 20px;
+        }
+
+        .pf-team:first-of-type { border-right: 1px solid var(--border); }
+
+        .pf-team h4 {
+            font-family: var(--display);
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            margin-bottom: 14px;
+        }
+
+        .pf-field {
             margin-bottom: 10px;
-            font-size: 1.2rem;
-            color: #555;
-            border-bottom: 2px solid #ddd;
-            padding-bottom: 5px;
         }
-        
-        /* Sticky Prep Section */
+
+        .pf-field label {
+            display: block;
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 5px;
+        }
+
+        .pf-field input, .pf-field select {
+            width: 100%;
+            background: var(--surface3);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text);
+            font-family: var(--sans);
+            font-size: 0.875rem;
+            padding: 9px 12px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .pf-field input:focus, .pf-field select:focus {
+            border-color: var(--gold);
+        }
+
+        .pf-field input::placeholder { color: var(--text-muted); }
+
+        .pf-field select option { background: var(--surface2); }
+
+        .t2-side-static {
+            background: var(--surface3);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text);
+            font-family: var(--sans);
+            font-size: 0.875rem;
+            padding: 9px 12px;
+            width: 100%;
+        }
+
+        /* ─── SECTION HEADING ─── */
+        .section-heading {
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-heading::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        /* ─── PREP SECTION ─── */
         #prep-section {
             position: sticky;
             top: 0;
             z-index: 50;
-            background-color: #f0f2f5;
-            padding: 15px 0 15px 0;
-            margin-bottom: 10px;
-            box-shadow: 0 10px 10px -10px rgba(0,0,0,0.05);
-        }
-        #prep-section .section-title {
-            margin-top: 0;
+            background: var(--bg);
+            padding: 16px 0 12px;
+            margin-bottom: 8px;
         }
 
-        .stages-container {
-            display: grid;
-            gap: 12px;
-        }
-        .prep-container {
+        .prep-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 15px;
+            gap: 12px;
         }
-        @media (max-width: 700px) {
-            .prep-container {
-                grid-template-columns: 1fr;
-            }
-        }
-        .stage-card {
-            position: relative;
+
+        /* ─── STAGE CARDS ─── */
+        .stage-list {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: white;
-            padding: 15px 20px 20px 20px; /* Extra bottom padding for the progress bar */
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            transition: all 0.2s ease;
-            border-left: 6px solid #ccc;
-            overflow: hidden;
-        }
-        .stage-card.active {
-            border-left-color: #2196f3;
-            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.25);
-            transform: scale(1.02);
-            z-index: 10;
-        }
-        .stage-card.next-stage {
-            border-left-color: #ffca28;
-            background: #fffdf5;
-        }
-        .stage-card.completed {
-            opacity: 0.5;
-            filter: grayscale(80%);
-            border-left-color: #4caf50;
-        }
-        .checkmark {
-            display: none;
-            color: #4caf50;
-            font-size: 1.8rem;
-            font-weight: bold;
-            margin-right: 15px;
-        }
-        .stage-card.completed .checkmark {
-            display: inline-block;
-        }
-        .stage-info {
-            flex: 1;
-            line-height: 1.4;
-        }
-        .stage-info h3 {
-            margin: 0 0 8px 0;
-            font-size: 1.1rem;
-            font-weight: normal;
-        }
-        .side-badge {
-            font-size: 0.8rem;
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-weight: bold;
-            display: inline-block;
-        }
-        .side-badge.pro { background: #e3f2fd; color: #1565c0; }
-        .side-badge.opp { background: #fce4ec; color: #c2185b; }
-        .side-badge.both { background: #e8f5e9; color: #2e7d32; }
-        
-        .stage-timer {
-            font-size: 2.2rem;
-            font-weight: bold;
-            font-family: monospace;
-            margin: 0 20px;
-            width: 100px;
-            text-align: center;
-        }
-        .controls button {
-            padding: 10px 16px;
-            margin-left: 8px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 0.9rem;
-            transition: opacity 0.2s;
-        }
-        .controls button:hover { opacity: 0.8; }
-        .btn-start { background: #4caf50; color: white; }
-        .btn-pause { background: #ff9800; color: white; }
-        .btn-reset { background: #f44336; color: white; }
-        .btn-global-reset { background: #1976d2; color: white; }
-        
-        .speaker-subtext {
-            font-size: 0.85rem;
-            color: #666;
-            display: block;
-            margin-top: 4px;
+            flex-direction: column;
+            gap: 8px;
         }
 
-        .judge-script {
-            font-size: 0.85rem;
-            color: #555;
-            font-style: italic;
-            margin-top: 8px;
-            display: block;
-            background: #f9f9f9;
-            padding: 6px 10px;
-            border-radius: 4px;
-            border-left: 3px solid #2196f3;
-        }
-
-        .info-tooltip {
+        .stage-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px 18px 20px;
             position: relative;
-            display: inline-flex;
+            overflow: hidden;
+            transition: all 0.25s ease;
+        }
+
+        .stage-card.completed {
+            opacity: 0.55;
+            background: var(--surface);
+        }
+
+        .stage-card.active {
+            border-color: var(--blue);
+            background: linear-gradient(135deg, rgba(74,144,217,0.07) 0%, var(--surface) 50%);
+            box-shadow: 0 0 0 1px rgba(74,144,217,0.3), 0 8px 32px rgba(74,144,217,0.12);
+        }
+
+        .stage-card.next-up {
+            border-color: rgba(240,180,41,0.3);
+            background: linear-gradient(135deg, rgba(240,180,41,0.04) 0%, var(--surface) 50%);
+        }
+
+        .stage-card.locked {
+            opacity: 0.35;
+        }
+
+        .stage-card.paused {
+            border-color: rgba(240,180,41,0.4);
+        }
+
+        /* PREP CARD */
+        .prep-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 14px 16px 18px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.25s ease;
+        }
+
+        .prep-card.active {
+            border-color: var(--purple);
+            background: linear-gradient(135deg, rgba(167,139,250,0.07) 0%, var(--surface) 60%);
+            box-shadow: 0 0 0 1px rgba(167,139,250,0.25), 0 6px 24px rgba(167,139,250,0.1);
+        }
+
+        .prep-card.completed {
+            opacity: 0.5;
+        }
+
+        .prep-card.paused {
+            border-color: rgba(240,180,41,0.4);
+        }
+
+        /* ─── ACCENT BAR ─── */
+        .accent-bar {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: transparent;
+            transition: background 0.3s;
+        }
+
+        .stage-card.active .accent-bar { background: var(--blue); }
+        .stage-card.next-up .accent-bar { background: rgba(240,180,41,0.5); }
+        .stage-card.completed .accent-bar { background: var(--green); }
+        .prep-card.active .accent-bar { background: var(--purple); }
+        .prep-card.completed .accent-bar { background: var(--green); }
+        .prep-card.paused .accent-bar, .stage-card.paused .accent-bar { background: var(--gold); }
+
+        /* ─── PROGRESS BAR ─── */
+        .progress-track {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 3px;
+            background: rgba(255,255,255,0.04);
+        }
+
+        .progress-fill {
+            height: 100%;
+            transition: width 1s linear, background 0.3s;
+            background: rgba(255,255,255,0.1);
+        }
+
+        .stage-card.active .progress-fill { background: var(--blue); }
+        .stage-card.completed .progress-fill { width: 0 !important; background: var(--green); }
+        .prep-card.active .progress-fill { background: var(--purple); }
+        .prep-card.completed .progress-fill { width: 0 !important; }
+        .stage-card.paused .progress-fill, .prep-card.paused .progress-fill { background: var(--gold); }
+
+        /* ─── CARD LAYOUT ─── */
+        .card-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .card-number {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--surface3);
+            border: 1px solid var(--border);
+            display: flex;
             align-items: center;
             justify-content: center;
-            cursor: help;
-            color: #1976d2;
-            background: #e3f2fd;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
+            font-family: var(--mono);
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            flex-shrink: 0;
+            transition: all 0.25s;
         }
-        
-        .info-tooltip .tooltip-text {
-            visibility: hidden;
-            width: 210px;
-            background-color: #333;
+
+        .stage-card.active .card-number {
+            background: var(--blue);
+            border-color: var(--blue);
             color: #fff;
+            box-shadow: 0 0 12px rgba(74,144,217,0.5);
+        }
+
+        .stage-card.completed .card-number {
+            background: var(--green);
+            border-color: var(--green);
+            color: #fff;
+        }
+
+        .stage-card.next-up .card-number {
+            border-color: rgba(240,180,41,0.5);
+            color: var(--gold);
+        }
+
+        .card-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .card-name {
+            font-family: var(--display);
+            font-weight: 700;
+            font-size: 0.95rem;
+            line-height: 1.3;
+            color: var(--text);
+        }
+
+        .card-name strong { font-weight: 800; }
+
+        .card-sub {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 5px;
+        }
+
+        .side-pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px;
+            border-radius: 100px;
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            margin-top: 5px;
+        }
+
+        .side-pill.pro { background: rgba(74,144,217,0.15); color: #7ab8f0; border: 1px solid rgba(74,144,217,0.25); }
+        .side-pill.opp { background: rgba(240,82,79,0.12); color: #f08080; border: 1px solid rgba(240,82,79,0.25); }
+        .side-pill.both { background: rgba(52,199,123,0.12); color: #70e0a8; border: 1px solid rgba(52,199,123,0.25); }
+
+        .judge-script {
+            font-family: var(--sans);
+            font-style: italic;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 5px;
+            display: block;
+            border-left: 2px solid var(--border-bright);
+            padding-left: 8px;
+        }
+
+        .card-timer {
+            font-family: var(--mono);
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            color: var(--text);
             text-align: center;
+            min-width: 110px;
+            flex-shrink: 0;
+            transition: color 0.3s;
+        }
+
+        .card-timer.overtime { color: var(--red); }
+        .stage-card.active .card-timer { color: var(--blue); }
+        .prep-card.active .card-timer { color: var(--purple); }
+
+        .prep-card .card-timer {
+            font-size: 1.6rem;
+            min-width: 85px;
+        }
+
+        .checkmark-icon {
+            display: none;
+            color: var(--green);
+            font-size: 1.3rem;
+            flex-shrink: 0;
+        }
+
+        .stage-card.completed .checkmark-icon,
+        .prep-card.completed .checkmark-icon { display: block; }
+
+        /* ─── CARD ACTIONS ─── */
+        .card-actions {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .action-btn {
+            border: none;
+            border-radius: var(--radius-sm);
+            font-family: var(--sans);
+            font-weight: 700;
+            font-size: 0.78rem;
+            cursor: pointer;
+            padding: 8px 14px;
+            transition: all 0.2s;
+            letter-spacing: 0.02em;
+        }
+
+        .action-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .action-start {
+            background: var(--blue);
+            color: #fff;
+        }
+
+        .action-start:hover:not(:disabled) {
+            background: #5aa3e8;
+            box-shadow: 0 4px 12px rgba(74,144,217,0.35);
+            transform: translateY(-1px);
+        }
+
+        .action-pause {
+            background: var(--gold);
+            color: #0a0c12;
+        }
+
+        .action-pause:hover {
+            background: #f5c040;
+            transform: translateY(-1px);
+        }
+
+        .action-reset {
+            background: var(--surface3);
+            color: var(--text-dim);
+            border: 1px solid var(--border);
+        }
+
+        .action-reset:hover { background: var(--red-dim); color: var(--red); border-color: rgba(240,82,79,0.3); }
+
+        .action-reset-icon {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 6px;
             border-radius: 6px;
-            padding: 8px;
-            position: absolute;
-            z-index: 100;
-            bottom: 125%;
-            left: 50%;
-            margin-left: -105px;
-            opacity: 0;
-            transition: opacity 0.3s;
-            font-size: 0.8rem;
-            font-weight: normal;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-            pointer-events: none;
+            display: flex;
+            align-items: center;
+            transition: all 0.2s;
         }
 
-        .info-tooltip .tooltip-text::after {
-            content: "";
-            position: absolute;
-            top: 100%;
-            left: 50%;
-            margin-left: -5px;
-            border-width: 5px;
-            border-style: solid;
-            border-color: #333 transparent transparent transparent;
+        .action-reset-icon:hover { background: var(--red-dim); color: var(--red); }
+
+        /* ─── FLOW DRAWER ─── */
+        .flow-drawer {
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid var(--border);
         }
 
-        .info-tooltip:hover .tooltip-text {
-            visibility: visible;
-            opacity: 1;
-        }
-
-        /* Progress Bar Styles */
-        .progress-bar-bg {
-            position: absolute;
-            bottom: 0;
-            left: 0;
+        .flow-drawer textarea {
             width: 100%;
-            height: 6px;
-            background-color: #e0e0e0;
-        }
-        .progress-bar-fill {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            height: 6px;
-            background-color: #ccc; 
-            transition: width 1s linear, background-color 0.3s ease;
-        }
-        .stage-card.active .progress-bar-fill {
-            background-color: #2196f3;
-        }
-        .stage-card.paused .progress-bar-fill {
-            background-color: #ff9800;
-        }
-        .stage-card.completed .progress-bar-fill {
-            background-color: #4caf50;
-            width: 0% !important; /* Forces it to empty when completed */
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text);
+            font-family: var(--sans);
+            font-size: 0.85rem;
+            padding: 10px 12px;
+            resize: vertical;
+            min-height: 90px;
+            outline: none;
+            transition: border-color 0.2s;
         }
 
-        /* Mobile Scaling Adjustments */
-        @media (max-width: 768px) {
-            .pf-settings {
-                grid-template-columns: 1fr;
-            }
-            .pf-settings .input-row {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 5px;
-            }
-            .pf-settings input, .pf-settings select, #t2-side-display {
-                width: 100% !important;
-                box-sizing: border-box;
-            }
-            .header {
-                flex-direction: column;
-                gap: 15px;
-            }
-            .controls-group {
-                flex-wrap: wrap;
-                justify-content: center;
-            }
-            .total-time-container {
-                text-align: center;
-            }
-            .stage-card {
-                display: grid;
-                grid-template-columns: auto 1fr;
-                grid-template-areas: 
-                    "check info"
-                    "timer controls";
-                gap: 15px 10px;
-                padding: 15px;
-                padding-bottom: 20px;
-            }
-            .checkmark {
-                grid-area: check;
-                margin-right: 0;
-            }
-            .stage-card.completed .checkmark {
-                display: block;
-            }
-            .stage-info {
-                grid-area: info;
-            }
-            .stage-timer {
-                grid-area: timer;
-                margin: 0;
-                text-align: left;
-            }
-            .controls {
-                grid-area: controls;
-                display: flex;
-                justify-content: flex-end;
-            }
-            .controls button {
-                padding: 8px 12px;
-                margin-left: 5px;
-            }
+        .flow-drawer textarea::placeholder { color: var(--text-muted); }
+        .flow-drawer textarea:focus { border-color: var(--blue); }
+
+        /* ─── MODALS ─── */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(6px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal {
+            background: var(--surface);
+            border: 1px solid var(--border-bright);
+            border-radius: 16px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 86vh;
+            overflow-y: auto;
+            box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+            animation: modal-in 0.25s ease;
+        }
+
+        @keyframes modal-in {
+            from { opacity: 0; transform: translateY(12px) scale(0.97); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 24px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .modal-title {
+            font-family: var(--display);
+            font-weight: 800;
+            font-size: 1.1rem;
+        }
+
+        .modal-close {
+            background: var(--surface3);
+            border: none;
+            color: var(--text-muted);
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .modal-close:hover { background: var(--red-dim); color: var(--red); }
+
+        .modal-body {
+            padding: 20px 24px 24px;
+        }
+
+        .modal-note {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        /* ─── ANALYTICS ─── */
+        .analytics-team-block {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+            margin-bottom: 14px;
+        }
+
+        .analytics-team-name {
+            font-family: var(--display);
+            font-weight: 700;
+            font-size: 0.9rem;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .zero-prep-badge {
+            font-family: var(--sans);
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--red);
+            background: var(--red-dim);
+            padding: 3px 8px;
+            border-radius: 100px;
+            border: 1px solid rgba(240,82,79,0.25);
+        }
+
+        .bar-row {
+            margin-bottom: 10px;
+        }
+
+        .bar-row-label {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            margin-bottom: 4px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .bar-row-label span:last-child {
+            color: var(--text-muted);
+        }
+
+        .bar-track {
+            height: 20px;
+            background: var(--surface3);
+            border-radius: 4px;
+            overflow: hidden;
+            display: flex;
+        }
+
+        .bar-used {
+            background: var(--blue);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: rgba(255,255,255,0.8);
+        }
+
+        .bar-prep-used {
+            background: var(--purple);
+        }
+
+        .bar-unused {
+            background: var(--surface3);
+            flex: 1;
+        }
+
+        /* ─── ANALYTICS LEGEND ─── */
+        .analytics-legend {
+            display: flex;
+            gap: 16px;
+            font-size: 0.76rem;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: var(--text-dim);
+        }
+
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+        }
+
+        /* ─── COIN ─── */
+        .coin-container {
+            perspective: 800px;
+            width: 140px;
+            height: 140px;
+            margin: 24px auto;
+            cursor: pointer;
+        }
+
+        .coin-inner {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 2s cubic-bezier(0.4, 0.2, 0.2, 1);
+        }
+
+        .coin-face {
+            position: absolute;
+            inset: 0;
+            backface-visibility: hidden;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--display);
+            font-weight: 800;
+            font-size: 1.1rem;
+        }
+
+        .coin-heads {
+            background: radial-gradient(circle at 35% 35%, #ffe066, #c8800a);
+            color: #7a4800;
+            border: 6px solid #d4900e;
+            box-shadow: 0 0 30px rgba(240,180,41,0.5);
+        }
+
+        .coin-tails {
+            background: radial-gradient(circle at 35% 35%, #8a9ab0, #3d4a5c);
+            color: #c0cad8;
+            border: 6px solid #5a6a7a;
+            transform: rotateY(180deg);
+        }
+
+        .coin-neutral {
+            background: radial-gradient(circle at 35% 35%, #2e3548, #1a1f2e);
+            color: var(--text-muted);
+            border: 6px solid var(--border-bright);
+        }
+
+        .coin-result {
+            text-align: center;
+            font-family: var(--display);
+            font-size: 1.4rem;
+            font-weight: 800;
+            min-height: 36px;
+            color: var(--gold);
+            margin: 12px 0 20px;
+        }
+
+        /* ─── CONFIRM ─── */
+        .confirm-modal {
+            max-width: 380px;
+            text-align: center;
+        }
+
+        .confirm-modal .modal-body {
+            padding: 24px;
+        }
+
+        .confirm-title {
+            font-family: var(--display);
+            font-size: 1.1rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+        }
+
+        .confirm-msg {
+            color: var(--text-dim);
+            font-size: 0.875rem;
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+
+        .confirm-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .btn-confirm-ok {
+            background: var(--red);
+            color: #fff;
+            border: none;
+            border-radius: var(--radius-sm);
+            padding: 10px 22px;
+            font-family: var(--sans);
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-confirm-ok:hover { background: #e04340; }
+
+        .btn-confirm-cancel {
+            background: var(--surface3);
+            color: var(--text-dim);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 10px 22px;
+            font-family: var(--sans);
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-confirm-cancel:hover { background: var(--surface2); }
+
+        /* ─── INSTRUCTIONS ─── */
+        .instructions-modal { max-width: 620px; }
+
+        .instr-section {
+            margin-bottom: 22px;
+        }
+
+        .instr-heading {
+            font-family: var(--display);
+            font-weight: 800;
+            font-size: 0.95rem;
+            color: var(--gold);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .instr-num {
+            width: 22px;
+            height: 22px;
+            background: var(--gold);
+            color: #0a0c12;
+            border-radius: 50%;
+            font-size: 0.7rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .instr-body {
+            font-size: 0.875rem;
+            color: var(--text-dim);
+            line-height: 1.65;
+        }
+
+        .instr-body strong { color: var(--text); }
+
+        .instr-mockup {
+            background: var(--surface3);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 12px 16px;
+            margin: 10px 0;
+            font-size: 0.82rem;
+            color: var(--text-dim);
+        }
+
+        /* ─── FLASH OVERLAY ─── */
+        .flash-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s;
+        }
+
+        .flash-overlay.show { opacity: 1; }
+
+        .flash-text {
+            font-family: var(--display);
+            font-size: clamp(80px, 20vw, 260px);
+            font-weight: 800;
+            color: #fff;
+            text-shadow: 0 0 60px rgba(255,255,255,0.3);
+            letter-spacing: -0.04em;
+            line-height: 1;
+        }
+
+        /* ─── TOAST ─── */
+        .toast {
+            position: fixed;
+            bottom: 28px;
+            left: 50%;
+            transform: translateX(-50%) translateY(12px);
+            background: var(--surface2);
+            border: 1px solid var(--border-bright);
+            border-left: 3px solid var(--gold);
+            color: var(--text);
+            font-family: var(--sans);
+            font-size: 0.85rem;
+            font-weight: 500;
+            padding: 12px 20px;
+            border-radius: var(--radius-sm);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            z-index: 9998;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* ─── FOOTER ─── */
+        .footer {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.78rem;
+            margin-top: 40px;
+            padding-bottom: 20px;
+            line-height: 2;
+        }
+
+        .footer a { color: var(--text-muted); text-underline-offset: 3px; }
+        .footer a:hover { color: var(--text-dim); }
+
+        .kbd {
+            display: inline-flex;
+            align-items: center;
+            background: var(--surface2);
+            border: 1px solid var(--border-bright);
+            border-radius: 4px;
+            padding: 1px 6px;
+            font-family: var(--mono);
+            font-size: 0.8em;
+            color: var(--text-dim);
+        }
+
+        /* ─── RESPONSIVE ─── */
+        @media (max-width: 700px) {
+            .pf-body-inner { grid-template-columns: 1fr; }
+            .pf-team:first-of-type { border-right: none; border-bottom: 1px solid var(--border); }
+            .topbar { gap: 10px; }
+            .topbar-divider { display: none; }
+            .time-banner-main { font-size: 1.7rem; }
+            .card-row { flex-wrap: wrap; }
+            .card-timer { min-width: auto; }
+            .card-actions { width: 100%; justify-content: flex-end; }
+            .prep-grid { grid-template-columns: 1fr 1fr; }
+            .judge-script, .flow-drawer { display: none; }
         }
     </style>
 </head>
 <body>
 
-<div class="dashboard">
-    <div class="header">
-        <div class="controls-group">
-            <select id="format-select" onchange="changeFormat()">
-                <option value="pf">Public Forum</option>
-                <option value="ld">Lincoln-Douglas</option>
-                <option value="extemp">Extemporaneous Debate</option>
+<!-- STICKY MINI TIMER -->
+<div class="sticky-timer" id="sticky-timer">
+    <div class="sticky-timer-label">Total Round Time Remaining</div>
+    <div style="display:flex;align-items:baseline;">
+        <div class="sticky-timer-value" id="sticky-total-time">00:00</div>
+        <div class="sticky-timer-prep" id="sticky-prep-time"></div>
+    </div>
+</div>
+
+
+<div class="app">
+    <!-- TOPBAR -->
+    <div class="topbar">
+        <div class="wordmark">MUELLER<span>.</span></div>
+        <div class="topbar-divider"></div>
+
+        <div class="format-select-wrap">
+            <select id="format-select" onchange="changeFormatFromSelect(this)">
+                <optgroup label="── OSDA Debate Events ──">
+                    <option value="pf">Public Forum</option>
+                    <option value="ld">Lincoln-Douglas</option>
+                    <option value="policy">Policy CX (beta)</option>
+                    <option value="bq">Big Questions (beta)</option>
+                    <option value="congress">Congressional (beta)</option>
+                </optgroup>
+                <optgroup label="── Other ──">
+                    <option value="extemp">Extemp Debate</option>
+                </optgroup>
             </select>
-            <label style="border: none; padding: 0; display: flex; align-items: center; gap: 6px;">
-                <input type="checkbox" id="bell-toggle" checked> Enable Bells
-                <span class="info-tooltip">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-                    <span class="tooltip-text">Plays a single bell at 30 seconds remaining, and a double bell when time is up.</span>
-                </span>
-            </label>
-            <button class="btn-global-reset" onclick="globalReset()">Global Reset</button>
         </div>
-        <div class="total-time-container">
-            <div class="total-time-label">Total Round Time Left</div>
-            <div class="total-time" id="total-time">00:00</div>
+
+        <div class="topbar-actions">
+            <div class="toggle-group">
+                <label class="toggle-item">
+                    <input type="checkbox" id="bell-toggle" checked>
+                    <div class="toggle-switch"></div>
+                    <span>Bells</span>
+                </label>
+                <label class="toggle-item" id="flow-toggle-label">
+                    <input type="checkbox" id="flow-toggle" checked onchange="toggleGlobalFlow()">
+                    <div class="toggle-switch"></div>
+                    <span>Flow</span>
+                </label>
+            </div>
+            <button class="btn btn-ghost" onclick="openInstructions()">Guide</button>
+            <button class="btn btn-ghost" onclick="showAnalytics()">Analytics</button>
+            <button id="btn-copy-flow" class="btn btn-ghost" onclick="copyFlow()">Copy Flow</button>
+            <button class="btn btn-danger-ghost" onclick="globalReset()">Reset</button>
         </div>
     </div>
 
-    <!-- Public Forum Settings -->
-    <div id="pf-settings-container" class="pf-settings" style="display: none;">
-        <div>
-            <h3>Team 1 (First Speaking Team)</h3>
-            <div class="input-row">
-                <label>Side:</label>
-                <select id="t1-side" onchange="updatePFNames()" style="width: 60%;">
-                    <option value="Affirmative">Affirmative</option>
-                    <option value="Negative">Negative</option>
-                </select>
+    <!-- TIME BANNER -->
+    <div class="time-banner" id="time-banner-anchor">
+        <div class="time-banner-label">Total Round Time Remaining</div>
+        <div class="time-banner-values">
+            <div class="time-banner-main" id="total-time">00:00</div>
+            <div class="time-banner-prep" id="total-prep-time"></div>
+        </div>
+    </div>
+
+    <!-- PF SETTINGS -->
+    <div id="pf-panel" class="pf-panel" style="display:none">
+        <div class="pf-panel-header" onclick="togglePFSettings()">
+            <div class="pf-panel-title">
+                Team Setup
+                <span class="badge-opt">Optional</span>
             </div>
-            <div class="input-row">
-                <label>Speaker 1:</label>
-                <input type="text" id="t1s1" placeholder="Name" oninput="updatePFNames()">
-            </div>
-            <div class="input-row">
-                <label>Speaker 3:</label>
-                <input type="text" id="t1s2" placeholder="Name" oninput="updatePFNames()">
+            <div style="display:flex;align-items:center;gap:10px;">
+                <button id="pf-copy-btn" onclick="event.stopPropagation();copyPFSetup()" title="Copy round setup to clipboard" style="background:none;border:none;cursor:pointer;padding:4px;border-radius:6px;color:var(--text-muted);opacity:0.4;transition:all 0.2s;display:flex;align-items:center;" onmouseenter="this.style.opacity='1';this.style.color='var(--gold)'" onmouseleave="this.style.opacity='0.4';this.style.color='var(--text-muted)'">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                </button>
+                <svg id="pf-caret" class="pf-caret" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
             </div>
         </div>
-        <div>
-            <h3>Team 2 (Second Speaking Team)</h3>
-            <div class="input-row">
-                <label>Side:</label>
-                <span id="t2-side-display" style="font-weight:bold; width: 60%; display:inline-block; padding:8px;">Negative</span>
+        <div id="pf-body" class="pf-body">
+            <div class="pf-coin-bar">
+                <div class="pf-field" style="flex:1;margin:0;">
+                    <label style="font-size:0.72rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:5px;">Resolution</label>
+                    <input type="text" id="pf-resolution" placeholder="Enter the resolution…" style="width:100%;background:var(--surface3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:var(--sans);font-size:0.875rem;padding:9px 12px;outline:none;transition:border-color 0.2s;" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor=''">
+                </div>
+                <button class="btn-coin" onclick="openCoinModal()" style="flex-shrink:0;align-self:flex-end;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><text x="8.5" y="16" font-size="11" stroke="none" fill="currentColor">$</text></svg>
+                    Flip Coin
+                </button>
             </div>
-            <div class="input-row">
-                <label>Speaker 2:</label>
-                <input type="text" id="t2s1" placeholder="Name" oninput="updatePFNames()">
-            </div>
-            <div class="input-row">
-                <label>Speaker 4:</label>
-                <input type="text" id="t2s2" placeholder="Name" oninput="updatePFNames()">
+            <div class="pf-body-inner">
+                <div class="pf-team">
+                    <h4>Team 1 · First Team Speaking</h4>
+                    <div class="pf-field">
+                        <label>Team Code</label>
+                        <input type="text" id="t1-code" placeholder="e.g. CC02" oninput="updatePFNames()">
+                    </div>
+                    <div class="pf-field">
+                        <label>Side</label>
+                        <select id="t1-side" onchange="updatePFNames()">
+                            <option value="Pro">Pro</option>
+                            <option value="Con">Con</option>
+                        </select>
+                    </div>
+                    <div class="pf-field">
+                        <label>Speaker 1</label>
+                        <input type="text" id="t1s1" placeholder="Name" oninput="updatePFNames()">
+                    </div>
+                    <div class="pf-field">
+                        <label>Speaker 3</label>
+                        <input type="text" id="t1s2" placeholder="Name" oninput="updatePFNames()">
+                    </div>
+                </div>
+                <div class="pf-team">
+                    <h4>Team 2 · Second Team Speaking</h4>
+                    <div class="pf-field">
+                        <label>Team Code</label>
+                        <input type="text" id="t2-code" placeholder="e.g. WW14" oninput="updatePFNames()">
+                    </div>
+                    <div class="pf-field">
+                        <label>Side</label>
+                        <div class="t2-side-static" id="t2-side-display">Con</div>
+                    </div>
+                    <div class="pf-field">
+                        <label>Speaker 2</label>
+                        <input type="text" id="t2s1" placeholder="Name" oninput="updatePFNames()">
+                    </div>
+                    <div class="pf-field">
+                        <label>Speaker 4</label>
+                        <input type="text" id="t2s2" placeholder="Name" oninput="updatePFNames()">
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <div id="prep-section" style="display: none;">
-        <div class="section-title">Preparation Time Pools</div>
-        <div class="prep-container" id="prep-container"></div>
+    <!-- POLICY SETTINGS -->
+    <div id="policy-panel" class="pf-panel" style="display:none">
+        <div class="pf-panel-header" onclick="togglePolicySettings()">
+            <div class="pf-panel-title">
+                Team Setup
+                <span class="badge-opt">Optional</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;">
+                <button onclick="event.stopPropagation();copyPolicySetup()" title="Copy round setup to clipboard" style="background:none;border:none;cursor:pointer;padding:4px;border-radius:6px;color:var(--text-muted);opacity:0.4;transition:all 0.2s;display:flex;align-items:center;" onmouseenter="this.style.opacity='1';this.style.color='var(--gold)'" onmouseleave="this.style.opacity='0.4';this.style.color='var(--text-muted)'">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                </button>
+                <svg id="policy-caret" class="pf-caret" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+        </div>
+        <div id="policy-body" class="pf-body">
+            <div class="pf-coin-bar">
+                <div class="pf-field" style="flex:1;margin:0;">
+                    <label style="font-size:0.72rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:5px;">Resolution</label>
+                    <input type="text" id="cx-resolution" placeholder="Enter the resolution…" style="width:100%;background:var(--surface3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:var(--sans);font-size:0.875rem;padding:9px 12px;outline:none;transition:border-color 0.2s;" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor=''">
+                </div>
+            </div>
+            <div class="pf-body-inner">
+                <div class="pf-team">
+                    <h4>Affirmative Team</h4>
+                    <div class="pf-field">
+                        <label>Team Code</label>
+                        <input type="text" id="cx-a-code" placeholder="e.g. CC02" oninput="updatePolicyNames()">
+                    </div>
+                    <div class="pf-field">
+                        <label>1st Speaker (1A)</label>
+                        <input type="text" id="cx-a1" placeholder="Name" oninput="updatePolicyNames()">
+                    </div>
+                    <div class="pf-field">
+                        <label>2nd Speaker (2A)</label>
+                        <input type="text" id="cx-a2" placeholder="Name" oninput="updatePolicyNames()">
+                    </div>
+                </div>
+                <div class="pf-team">
+                    <h4>Negative Team</h4>
+                    <div class="pf-field">
+                        <label>Team Code</label>
+                        <input type="text" id="cx-n-code" placeholder="e.g. WW14" oninput="updatePolicyNames()">
+                    </div>
+                    <div class="pf-field">
+                        <label>1st Speaker (1N)</label>
+                        <input type="text" id="cx-n1" placeholder="Name" oninput="updatePolicyNames()">
+                    </div>
+                    <div class="pf-field">
+                        <label>2nd Speaker (2N)</label>
+                        <input type="text" id="cx-n2" placeholder="Name" oninput="updatePolicyNames()">
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div class="section-title">Round Sequence</div>
-    <div class="stages-container" id="stages-container"></div>
-    
-    <p style="text-align: center; color: #888; font-size: 0.9rem; margin-top: 30px;">
-        Keyboard Shortcut: Press <strong>Spacebar</strong> to quickly Pause/Resume the active timer.
+    <!-- PREP SECTION -->
+    <div id="prep-section" style="display:none">
+        <div class="section-heading">Preparation Time</div>
+        <div class="prep-grid" id="prep-container"></div>
+    </div>
+
+    <!-- STAGES -->
+    <div class="section-heading" style="margin-top:4px">Round Sequence</div>
+    <div class="stage-list" id="stages-container"></div>
+
+    <p class="footer">
+        Press <span class="kbd">Space</span> to pause/resume the active timer.<br>
+        Written by Lucas &amp; Max Mueller ·
+        <a href="https://docs.google.com/document/d/15hZBQh980wGGCsPgnB1dRKCVQ4fPJ9XnxX39LcxhK2k/edit?usp=drive_link" target="_blank">Terms of Use &amp; Privacy Policy</a>
     </p>
 </div>
 
+<!-- TOAST -->
+<div id="toast" class="toast"></div>
+
+<!-- FLASH -->
+<div id="flash-overlay" class="flash-overlay">
+    <div id="flash-text" class="flash-text"></div>
+</div>
+
+<!-- ANALYTICS MODAL -->
+<div id="analytics-modal" class="modal-overlay">
+    <div class="modal">
+        <div class="modal-header">
+            <div class="modal-title">Round Analytics</div>
+            <button class="modal-close" onclick="closeModal('analytics-modal')">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="modal-note">
+                A breakdown of time available vs. used. Overtime ≤10 seconds is ignored as a grace period.
+            </div>
+            <div class="analytics-legend">
+                <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div> Speeches Used</div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--purple)"></div> Prep Used</div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--surface3);border:1px solid var(--border)"></div> Unused</div>
+            </div>
+            <div id="analytics-content"></div>
+        </div>
+    </div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div id="confirm-modal" class="modal-overlay">
+    <div class="modal confirm-modal">
+        <div class="modal-body">
+            <div class="confirm-title" id="confirm-title">Confirm</div>
+            <div class="confirm-msg" id="confirm-message">Are you sure?</div>
+            <div class="confirm-actions">
+                <button class="btn-confirm-cancel" id="confirm-cancel">Cancel</button>
+                <button class="btn-confirm-ok" id="confirm-ok">Confirm</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- COIN MODAL -->
+<div id="coin-modal" class="modal-overlay">
+    <div class="modal" style="max-width:320px;text-align:center">
+        <div class="modal-header">
+            <div class="modal-title">Coin Toss</div>
+            <button class="modal-close" onclick="closeModal('coin-modal')">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="coin-container" onclick="triggerCoinFlip()" title="Tap to flip!">
+                <div id="coin-inner" class="coin-inner">
+                    <div id="coin-front" class="coin-face coin-neutral coin-heads" style="background:radial-gradient(circle at 35% 35%,#2e3548,#1a1f2e);color:var(--text-muted);border:6px solid var(--border-bright);box-shadow:none">?</div>
+                    <div id="coin-back" class="coin-face coin-neutral coin-tails" style="background:radial-gradient(circle at 35% 35%,#2e3548,#1a1f2e);color:var(--text-muted);border:6px solid var(--border-bright)">?</div>
+                </div>
+            </div>
+            <div id="coin-result-text" class="coin-result"></div>
+            <button class="action-btn action-start" onclick="triggerCoinFlip()" style="width:100%;padding:12px;font-size:0.9rem">Toss Coin</button>
+        </div>
+    </div>
+</div>
+
+<!-- INSTRUCTIONS MODAL -->
+<div id="instructions-modal" class="modal-overlay">
+    <div class="modal instructions-modal">
+        <div class="modal-header">
+            <div class="modal-title">How to Use</div>
+            <button class="modal-close" onclick="closeModal('instructions-modal')">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="instr-section">
+                <div class="instr-heading"><div class="instr-num">1</div> Setting Up the Round</div>
+                <div class="instr-body">Select your debate format using the pill selector at the top. The correct speech sequence and prep pools load automatically.<br><br>For <strong>Public Forum</strong>, expand the Team Setup panel to enter speaker names and sides. Use the <strong>Flip Coin</strong> button to randomize sides.</div>
+            </div>
+            <div class="instr-section">
+                <div class="instr-heading"><div class="instr-num">2</div> Controlling Timers</div>
+                <div class="instr-body">Click <strong>Start</strong> on any card to begin its countdown. Press <span class="kbd">Space</span> to quickly pause/resume the active timer.<br><br>Starting a new speech automatically completes the previous one. Future stages are locked until you reach them in sequence.</div>
+            </div>
+            <div class="instr-section">
+                <div class="instr-heading"><div class="instr-num">3</div> Prep vs. Speeches</div>
+                <div class="instr-body"><strong>Prep Time</strong> pools are pinned to the top and stop at 0:00. <strong>Speeches</strong> continue into negative time (shown in red) so you can track overtime accurately. Overtime ≤10 seconds is treated as a grace period.</div>
+            </div>
+            <div class="instr-section">
+                <div class="instr-heading"><div class="instr-num">4</div> Flow &amp; Analytics</div>
+                <div class="instr-body">Toggle <strong>Flow</strong> to reveal note-taking text areas under each speech. After the round, click <strong>Copy Flow</strong> to copy a formatted document with your notes and an analytics summary — pasteable directly into Google Docs or Word.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
-    const formats = {
-        "ld": {
-            stages: [
-                { name: "<strong>Affirmative</strong> Constructive", side: "Aff", minutes: 6, script: "Affirmative, you have 6 minutes for your Constructive." },
-                { name: "<strong>Cross-Examination</strong>", side: "Neg", minutes: 3, script: "Negative, you have 3 minutes for Cross-Examination." },
-                { name: "<strong>Negative</strong> Constructive", side: "Neg", minutes: 7, script: "Negative, you have 7 minutes for your Constructive." },
-                { name: "<strong>Cross-Examination</strong>", side: "Aff", minutes: 3, script: "Affirmative, you have 3 minutes for Cross-Examination." },
-                { name: "<strong>Affirmative</strong> Rebuttal 1", side: "Aff", minutes: 4, script: "Affirmative, you have 4 minutes for your first Rebuttal." },
-                { name: "<strong>Negative</strong> Rebuttal", side: "Neg", minutes: 6, script: "Negative, you have 6 minutes for your Rebuttal." },
-                { name: "<strong>Affirmative</strong> Rebuttal 2", side: "Aff", minutes: 3, script: "Affirmative, you have 3 minutes for your second Rebuttal." }
-            ],
-            prep: [
-                { name: "Affirmative Prep Time", side: "Aff", minutes: 4 },
-                { name: "Negative Prep Time", side: "Neg", minutes: 4 }
-            ]
-        },
-        "extemp": {
-            stages: [
-                { name: "<strong>Affirmative</strong> Constructive", side: "Affirmative", minutes: 2, script: "Affirmative, you have 2 minutes for your Constructive." },
-                { name: "<strong>Cross-Examination</strong> of Aff", side: "Negative", minutes: 1, script: "Negative, you have 1 minute to cross-examine the Affirmative." },
-                { name: "<strong>Negative</strong> Constructive", side: "Negative", minutes: 2, script: "Negative, you have 2 minutes for your Constructive." },
-                { name: "<strong>Cross-Examination</strong> of Neg", side: "Affirmative", minutes: 1, script: "Affirmative, you have 1 minute to cross-examine the Negative." },
-                { name: "<strong>Mandatory Prep Time</strong>", side: "Both", minutes: 1, script: "Both teams have 1 minute of mandatory prep time." },
-                { name: "<strong>Affirmative</strong> Rebuttal", side: "Affirmative", minutes: 2, script: "Affirmative, you have 2 minutes for your Rebuttal." },
-                { name: "<strong>Negative</strong> Rebuttal", side: "Negative", minutes: 2, script: "Negative, you have 2 minutes for your Rebuttal." },
-                { name: "<strong>Mandatory Prep Time</strong>", side: "Both", minutes: 1, script: "Both teams have 1 minute of mandatory prep time." },
-                { name: "<strong>Affirmative</strong> Final Rebuttal", side: "Affirmative", minutes: 2, script: "Affirmative, you have 2 minutes for your Final Rebuttal." },
-                { name: "<strong>Negative</strong> Final Rebuttal", side: "Negative", minutes: 2, script: "Negative, you have 2 minutes for your Final Rebuttal." }
-            ],
-            prep: [] 
-        }
+const formats = {
+    "ld": {
+        label: "Lincoln-Douglas",
+        stages: [
+            { name: "<strong>Affirmative</strong> Constructive (AC)", side: "Aff", minutes: 6, script: "Affirmative, you have 6 minutes for your Constructive." },
+            { name: "<strong>Cross-Examination</strong>", side: "Neg", minutes: 3, script: "Negative, you have 3 minutes for Cross-Examination." },
+            { name: "<strong>Negative</strong> Constructive (NC)", side: "Neg", minutes: 7, script: "Negative, you have 7 minutes for your Constructive." },
+            { name: "<strong>Cross-Examination</strong>", side: "Aff", minutes: 3, script: "Affirmative, you have 3 minutes for Cross-Examination." },
+            { name: "<strong>Affirmative</strong> Rebuttal 1 (1AR)", side: "Aff", minutes: 4, script: "Affirmative, you have 4 minutes for your first Rebuttal." },
+            { name: "<strong>Negative</strong> Rebuttal (NR)", side: "Neg", minutes: 6, script: "Negative, you have 6 minutes for your Rebuttal." },
+            { name: "<strong>Affirmative</strong> Rebuttal 2 (2AR)", side: "Aff", minutes: 3, script: "Affirmative, you have 3 minutes for your second Rebuttal." }
+        ],
+        prep: [
+            { name: "Aff Prep", side: "Aff", minutes: 4 },
+            { name: "Neg Prep", side: "Neg", minutes: 4 }
+        ]
+    },
+    "bq": {
+        label: "Big Questions",
+        stages: [
+            { name: "<strong>Affirmative</strong> Constructive", side: "Aff", minutes: 5, script: "Affirmative, you have 5 minutes for your Constructive." },
+            { name: "<strong>Negative</strong> Constructive", side: "Neg", minutes: 5, script: "Negative, you have 5 minutes for your Constructive." },
+            { name: "<strong>Question Segment</strong>", side: "Both", minutes: 3, script: "Both sides, you have 3 minutes for the Question Segment. Affirmative asks first." },
+            { name: "<strong>Affirmative</strong> Rebuttal", side: "Aff", minutes: 4, script: "Affirmative, you have 4 minutes for your Rebuttal." },
+            { name: "<strong>Negative</strong> Rebuttal", side: "Neg", minutes: 4, script: "Negative, you have 4 minutes for your Rebuttal." },
+            { name: "<strong>Question Segment</strong>", side: "Both", minutes: 3, script: "Both sides, you have 3 minutes for the Question Segment." },
+            { name: "<strong>Affirmative</strong> Consolidation", side: "Aff", minutes: 3, script: "Affirmative, you have 3 minutes for your Consolidation." },
+            { name: "<strong>Negative</strong> Consolidation", side: "Neg", minutes: 3, script: "Negative, you have 3 minutes for your Consolidation." },
+            { name: "<strong>Final Question Segment</strong>", side: "Both", minutes: 3, script: "Both sides, you have 3 minutes for the Final Question Segment." },
+            { name: "<strong>Affirmative</strong> Rationale", side: "Aff", minutes: 3, script: "Affirmative, you have 3 minutes for your Rationale." },
+            { name: "<strong>Negative</strong> Rationale", side: "Neg", minutes: 3, script: "Negative, you have 3 minutes for your Rationale." }
+        ],
+        prep: [
+            { name: "Aff Prep", side: "Aff", minutes: 3 },
+            { name: "Neg Prep", side: "Neg", minutes: 3 }
+        ]
+    },
+    "congress": {
+        label: "Congressional Debate",
+        stages: [
+            { name: "<strong>Authorship / Sponsorship</strong> Speech", side: "Aff", minutes: 3, script: "Speaker, you have 3 minutes for your Authorship or Sponsorship speech." },
+            { name: "<strong>Questioning</strong> Period", side: "Both", minutes: 2, script: "Chamber, you have 2 minutes for questioning." },
+            { name: "<strong>1st Opposition</strong> Speech", side: "Neg", minutes: 3, script: "Speaker, you have 3 minutes for your Opposition speech." },
+            { name: "<strong>Questioning</strong> Period", side: "Both", minutes: 2, script: "Chamber, you have 2 minutes for questioning." },
+            { name: "<strong>Affirmative</strong> Speech", side: "Aff", minutes: 3, script: "Speaker, you have 3 minutes." },
+            { name: "<strong>Questioning</strong> Period", side: "Both", minutes: 1, script: "Chamber, you have 1 minute for questioning." },
+            { name: "<strong>Negative</strong> Speech", side: "Neg", minutes: 3, script: "Speaker, you have 3 minutes." },
+            { name: "<strong>Questioning</strong> Period", side: "Both", minutes: 1, script: "Chamber, you have 1 minute for questioning." },
+            { name: "<strong>Affirmative</strong> Speech", side: "Aff", minutes: 3, script: "Speaker, you have 3 minutes." },
+            { name: "<strong>Questioning</strong> Period", side: "Both", minutes: 1, script: "Chamber, you have 1 minute for questioning." },
+            { name: "<strong>Negative</strong> Speech", side: "Neg", minutes: 3, script: "Speaker, you have 3 minutes." },
+            { name: "<strong>Questioning</strong> Period", side: "Both", minutes: 1, script: "Chamber, you have 1 minute for questioning." }
+        ],
+        prep: []
+    },
+    "extemp": {
+        label: "Extemp Debate",
+        stages: [
+            { name: "<strong>Affirmative</strong> Constructive", side: "Affirmative", minutes: 2, script: "Affirmative, you have 2 minutes." },
+            { name: "<strong>Cross-Examination</strong> of Aff", side: "Negative", minutes: 1, script: "Negative, 1 minute to cross-examine Affirmative." },
+            { name: "<strong>Negative</strong> Constructive", side: "Negative", minutes: 2, script: "Negative, you have 2 minutes." },
+            { name: "<strong>Cross-Examination</strong> of Neg", side: "Affirmative", minutes: 1, script: "Affirmative, 1 minute to cross-examine Negative." },
+            { name: "<strong>Mandatory Prep Time</strong>", side: "Both", minutes: 1, script: "Both teams, 1 minute mandatory prep." },
+            { name: "<strong>Affirmative</strong> Rebuttal", side: "Affirmative", minutes: 2, script: "Affirmative, you have 2 minutes for your Rebuttal." },
+            { name: "<strong>Negative</strong> Rebuttal", side: "Negative", minutes: 2, script: "Negative, you have 2 minutes for your Rebuttal." },
+            { name: "<strong>Mandatory Prep Time</strong>", side: "Both", minutes: 1, script: "Both teams, 1 minute mandatory prep." },
+            { name: "<strong>Affirmative</strong> Final Rebuttal", side: "Affirmative", minutes: 2, script: "Affirmative, 2 minutes for your Final Rebuttal." },
+            { name: "<strong>Negative</strong> Final Rebuttal", side: "Negative", minutes: 2, script: "Negative, 2 minutes for your Final Rebuttal." }
+        ],
+        prep: []
+    }
+};
+
+let appData = { stages: [], prepPools: [], activeStageId: null, interval: null, notes: {}, globalFlowEnabled: true };
+let audioCtx, coinFlips = 0;
+
+function getPFStages() {
+    let t1side = document.getElementById('t1-side')?.value || "Pro";
+    let t2side = t1side === "Pro" ? "Con" : "Pro";
+    document.getElementById('t2-side-display').innerText = t2side;
+    let t1s1 = document.getElementById('t1s1')?.value || "Speaker 1";
+    let t1s2 = document.getElementById('t1s2')?.value || "Speaker 3";
+    let t2s1 = document.getElementById('t2s1')?.value || "Speaker 2";
+    let t2s2 = document.getElementById('t2s2')?.value || "Speaker 4";
+    return {
+        stages: [
+            { name: `<strong>${t1side}</strong> Constructive<span class="card-sub">[${t1s1}]</span>`, side: t1side, speakerName: t1s1, speakerPos: "Speaker 1", minutes: 4, script: `${t1side} (${t1s1}), you have 4 minutes for your Constructive.` },
+            { name: `<strong>${t2side}</strong> Constructive<span class="card-sub">[${t2s1}]</span>`, side: t2side, speakerName: t2s1, speakerPos: "Speaker 2", minutes: 4, script: `${t2side} (${t2s1}), you have 4 minutes for your Constructive.` },
+            { name: `<strong>Crossfire</strong><span class="card-sub">[${t1s1} &amp; ${t2s1}]</span>`, side: "Both", speakerName: "All", speakerPos: "All", minutes: 3, script: `${t1s1} and ${t2s1}, you have 3 minutes for Crossfire.` },
+            { name: `<strong>${t1side}</strong> Rebuttal<span class="card-sub">[${t1s2}]</span>`, side: t1side, speakerName: t1s2, speakerPos: "Speaker 3", minutes: 4, script: `${t1side} (${t1s2}), you have 4 minutes for your Rebuttal.` },
+            { name: `<strong>${t2side}</strong> Rebuttal<span class="card-sub">[${t2s2}]</span>`, side: t2side, speakerName: t2s2, speakerPos: "Speaker 4", minutes: 4, script: `${t2side} (${t2s2}), you have 4 minutes for your Rebuttal.` },
+            { name: `<strong>Crossfire</strong><span class="card-sub">[${t1s2} &amp; ${t2s2}]</span>`, side: "Both", speakerName: "All", speakerPos: "All", minutes: 3, script: `${t1s2} and ${t2s2}, you have 3 minutes for Crossfire.` },
+            { name: `<strong>${t1side}</strong> Summary<span class="card-sub">[${t1s1}]</span>`, side: t1side, speakerName: t1s1, speakerPos: "Speaker 1", minutes: 3, script: `${t1side} (${t1s1}), you have 3 minutes for your Summary.` },
+            { name: `<strong>${t2side}</strong> Summary<span class="card-sub">[${t2s1}]</span>`, side: t2side, speakerName: t2s1, speakerPos: "Speaker 2", minutes: 3, script: `${t2side} (${t2s1}), you have 3 minutes for your Summary.` },
+            { name: `<strong>Grand Crossfire</strong><span class="card-sub">[All Speakers]</span>`, side: "Both", speakerName: "All", speakerPos: "All", minutes: 3, script: `All speakers, you have 3 minutes for Grand Crossfire.` },
+            { name: `<strong>${t1side}</strong> Final Focus<span class="card-sub">[${t1s2}]</span>`, side: t1side, speakerName: t1s2, speakerPos: "Speaker 3", minutes: 2, script: `${t1side} (${t1s2}), you have 2 minutes for your Final Focus.` },
+            { name: `<strong>${t2side}</strong> Final Focus<span class="card-sub">[${t2s2}]</span>`, side: t2side, speakerName: t2s2, speakerPos: "Speaker 4", minutes: 2, script: `${t2side} (${t2s2}), you have 2 minutes for your Final Focus.` }
+        ],
+        prep: [
+            { name: `${t1side} Prep`, side: t1side, speakerName: "Team", speakerPos: "Team", minutes: 3 },
+            { name: `${t2side} Prep`, side: t2side, speakerName: "Team", speakerPos: "Team", minutes: 3 }
+        ]
     };
+}
 
-    let appData = {
-        stages: [],
-        prepPools: [],
-        activeStageId: null,
-        interval: null
+let toastTimer = null;
+function showToast(msg) {
+    const el = document.getElementById('toast');
+    el.innerText = msg;
+    el.classList.add('show');
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+function initAudio() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+function playBell(times) {
+    if (!document.getElementById('bell-toggle').checked) return;
+    for (let i = 0; i < times; i++) {
+        setTimeout(() => {
+            const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.type = 'sine'; osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+            gain.gain.setValueAtTime(1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1.5);
+            osc.start(audioCtx.currentTime); osc.stop(audioCtx.currentTime + 1.5);
+        }, i * 600);
+    }
+}
+
+function playCoinSound() {
+    if (!document.getElementById('bell-toggle').checked) return;
+    const o1 = audioCtx.createOscillator(), o2 = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o1.type='sine'; o1.frequency.setValueAtTime(2600, audioCtx.currentTime);
+    o2.type='triangle'; o2.frequency.setValueAtTime(2650, audioCtx.currentTime);
+    g.gain.setValueAtTime(0, audioCtx.currentTime);
+    g.gain.linearRampToValueAtTime(0.15, audioCtx.currentTime+0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+2);
+    o1.connect(g); o2.connect(g); g.connect(audioCtx.destination);
+    o1.start(); o2.start(); o1.stop(audioCtx.currentTime+2); o2.stop(audioCtx.currentTime+2);
+}
+
+function triggerFlash(seconds, customText=null, customColor=null) {
+    const overlay = document.getElementById('flash-overlay');
+    const textElem = document.getElementById('flash-text');
+    if (customText) {
+        overlay.style.backgroundColor = customColor || 'rgba(74,144,217,0.92)';
+        textElem.innerText = customText;
+        textElem.style.fontSize = customText.length > 10 ? 'clamp(32px,6vw,72px)' : '';
+    } else if (seconds === 30) {
+        overlay.style.backgroundColor = 'rgba(240,180,41,0.92)';
+        textElem.innerText = '30s';
+        textElem.style.fontSize = '';
+    } else if (seconds === 0) {
+        overlay.style.backgroundColor = 'rgba(240,82,79,0.92)';
+        textElem.innerText = '0s';
+        textElem.style.fontSize = '';
+    } else return;
+    overlay.classList.add('show');
+    setTimeout(() => overlay.classList.remove('show'), 1500);
+}
+
+function formatTime(s) {
+    let neg = s < 0, abs = Math.abs(s);
+    return (neg ? '-' : '') + String(Math.floor(abs/60)).padStart(2,'0') + ':' + String(abs%60).padStart(2,'0');
+}
+
+function getSideClass(side) {
+    let l = side.toLowerCase();
+    if (l.includes('pro')||l.includes('aff')) return 'pro';
+    if (l.includes('con')||l.includes('neg')||l.includes('opp')) return 'opp';
+    return 'both';
+}
+
+function calculateTotalTime() {
+    return appData.stages.reduce((t,s) => s.status!=='completed' ? t+Math.max(0,s.timeRemaining) : t, 0);
+}
+
+function togglePFSettings() {
+    const body = document.getElementById('pf-body');
+    const caret = document.getElementById('pf-caret');
+    const open = body.style.display==='block';
+    body.style.display = open ? 'none' : 'block';
+    caret.style.transform = open ? 'rotate(0deg)' : 'rotate(180deg)';
+}
+
+function togglePolicySettings() {
+    const body = document.getElementById('policy-body');
+    const caret = document.getElementById('policy-caret');
+    const open = body.style.display==='block';
+    body.style.display = open ? 'none' : 'block';
+    caret.style.transform = open ? 'rotate(0deg)' : 'rotate(180deg)';
+}
+
+function getPolicyStages() {
+    let a1 = document.getElementById('cx-a1')?.value || '1A';
+    let a2 = document.getElementById('cx-a2')?.value || '2A';
+    let n1 = document.getElementById('cx-n1')?.value || '1N';
+    let n2 = document.getElementById('cx-n2')?.value || '2N';
+    return {
+        stages: [
+            { name: `<strong>1st Affirmative</strong> Constructive (1AC)<span class="card-sub">[${a1}]</span>`, side: 'Aff', speakerName: a1, speakerPos: '1A', minutes: 8, script: `${a1}, you have 8 minutes for the 1AC.` },
+            { name: `<strong>Cross-Examination</strong> by 2N<span class="card-sub">[${n2} questions ${a1}]</span>`, side: 'Neg', speakerName: n2, speakerPos: '2N', minutes: 3, script: `${n2}, you have 3 minutes for Cross-Examination.` },
+            { name: `<strong>1st Negative</strong> Constructive (1NC)<span class="card-sub">[${n1}]</span>`, side: 'Neg', speakerName: n1, speakerPos: '1N', minutes: 8, script: `${n1}, you have 8 minutes for the 1NC.` },
+            { name: `<strong>Cross-Examination</strong> by 1A<span class="card-sub">[${a1} questions ${n1}]</span>`, side: 'Aff', speakerName: a1, speakerPos: '1A', minutes: 3, script: `${a1}, you have 3 minutes for Cross-Examination.` },
+            { name: `<strong>2nd Affirmative</strong> Constructive (2AC)<span class="card-sub">[${a2}]</span>`, side: 'Aff', speakerName: a2, speakerPos: '2A', minutes: 8, script: `${a2}, you have 8 minutes for the 2AC.` },
+            { name: `<strong>Cross-Examination</strong> by 1N<span class="card-sub">[${n1} questions ${a2}]</span>`, side: 'Neg', speakerName: n1, speakerPos: '1N', minutes: 3, script: `${n1}, you have 3 minutes for Cross-Examination.` },
+            { name: `<strong>2nd Negative</strong> Constructive (2NC)<span class="card-sub">[${n2}]</span>`, side: 'Neg', speakerName: n2, speakerPos: '2N', minutes: 8, script: `${n2}, you have 8 minutes for the 2NC.` },
+            { name: `<strong>Cross-Examination</strong> by 2A<span class="card-sub">[${a2} questions ${n2}]</span>`, side: 'Aff', speakerName: a2, speakerPos: '2A', minutes: 3, script: `${a2}, you have 3 minutes for Cross-Examination.` },
+            { name: `<strong>1st Negative</strong> Rebuttal (1NR)<span class="card-sub">[${n1}]</span>`, side: 'Neg', speakerName: n1, speakerPos: '1N', minutes: 5, script: `${n1}, you have 5 minutes for the 1NR.` },
+            { name: `<strong>1st Affirmative</strong> Rebuttal (1AR)<span class="card-sub">[${a1}]</span>`, side: 'Aff', speakerName: a1, speakerPos: '1A', minutes: 5, script: `${a1}, you have 5 minutes for the 1AR.` },
+            { name: `<strong>2nd Negative</strong> Rebuttal (2NR)<span class="card-sub">[${n2}]</span>`, side: 'Neg', speakerName: n2, speakerPos: '2N', minutes: 5, script: `${n2}, you have 5 minutes for the 2NR.` },
+            { name: `<strong>2nd Affirmative</strong> Rebuttal (2AR)<span class="card-sub">[${a2}]</span>`, side: 'Aff', speakerName: a2, speakerPos: '2A', minutes: 5, script: `${a2}, you have 5 minutes for the 2AR.` }
+        ],
+        prep: [
+            { name: 'Aff Prep', side: 'Aff', minutes: 8 },
+            { name: 'Neg Prep', side: 'Neg', minutes: 8 }
+        ]
     };
+}
 
-    let audioCtx;
+function copyPFSetup() {
+    let resolution = document.getElementById('pf-resolution')?.value.trim() || '';
+    let t1side = document.getElementById('t1-side')?.value || 'Pro';
+    let t2side = t1side === 'Pro' ? 'Con' : 'Pro';
+    let t1code = document.getElementById('t1-code')?.value.trim() || '';
+    let t2code = document.getElementById('t2-code')?.value.trim() || '';
+    let t1s1 = document.getElementById('t1s1')?.value.trim() || '';
+    let t1s2 = document.getElementById('t1s2')?.value.trim() || '';
+    let t2s1 = document.getElementById('t2s1')?.value.trim() || '';
+    let t2s2 = document.getElementById('t2s2')?.value.trim() || '';
 
-    function getPFStages() {
-        let t1side = document.getElementById('t1-side') ? document.getElementById('t1-side').value : "Affirmative";
-        let t2side = t1side === "Affirmative" ? "Negative" : "Affirmative";
-        
-        if(document.getElementById('t2-side-display')) {
-            document.getElementById('t2-side-display').innerText = t2side;
-        }
+    let text =
+`Resolution: [${resolution}]
 
-        let t1s1 = document.getElementById('t1s1') && document.getElementById('t1s1').value ? document.getElementById('t1s1').value : "Speaker 1";
-        let t1s2 = document.getElementById('t1s2') && document.getElementById('t1s2').value ? document.getElementById('t1s2').value : "Speaker 3";
-        let t2s1 = document.getElementById('t2s1') && document.getElementById('t2s1').value ? document.getElementById('t2s1').value : "Speaker 2";
-        let t2s2 = document.getElementById('t2s2') && document.getElementById('t2s2').value ? document.getElementById('t2s2').value : "Speaker 4";
+Team Speaking First:
+Team Code: [${t1code}]
+Side: [${t1side}]
+First Speaker Name: [${t1s1}]
+Second Speaker Name: [${t1s2}]
 
-        return {
-            stages: [
-                { name: `<strong>${t1side}</strong> Constructive<span class="speaker-subtext">${t1s1}</span>`, side: t1side, minutes: 4, script: `${t1side} (${t1s1}), you have 4 minutes for your Constructive.` },
-                { name: `<strong>${t2side}</strong> Constructive<span class="speaker-subtext">${t2s1}</span>`, side: t2side, minutes: 4, script: `${t2side} (${t2s1}), you have 4 minutes for your Constructive.` },
-                { name: `<strong>Crossfire</strong><span class="speaker-subtext">${t1s1} & ${t2s1}</span>`, side: "Both", minutes: 3, script: `${t1side} (${t1s1}) and ${t2side} (${t2s1}), you have 3 minutes for Crossfire.` },
-                { name: `<strong>${t1side}</strong> Rebuttal<span class="speaker-subtext">${t1s2}</span>`, side: t1side, minutes: 4, script: `${t1side} (${t1s2}), you have 4 minutes for your Rebuttal.` },
-                { name: `<strong>${t2side}</strong> Rebuttal<span class="speaker-subtext">${t2s2}</span>`, side: t2side, minutes: 4, script: `${t2side} (${t2s2}), you have 4 minutes for your Rebuttal.` },
-                { name: `<strong>Crossfire</strong><span class="speaker-subtext">${t1s2} & ${t2s2}</span>`, side: "Both", minutes: 3, script: `${t1side} (${t1s2}) and ${t2side} (${t2s2}), you have 3 minutes for Crossfire.` },
-                { name: `<strong>${t1side}</strong> Summary<span class="speaker-subtext">${t1s1}</span>`, side: t1side, minutes: 3, script: `${t1side} (${t1s1}), you have 3 minutes for your Summary.` },
-                { name: `<strong>${t2side}</strong> Summary<span class="speaker-subtext">${t2s1}</span>`, side: t2side, minutes: 3, script: `${t2side} (${t2s1}), you have 3 minutes for your Summary.` },
-                { name: `<strong>Grand Crossfire</strong><span class="speaker-subtext">All Speakers</span>`, side: "Both", minutes: 3, script: `All speakers, you have 3 minutes for Grand Crossfire.` },
-                { name: `<strong>${t1side}</strong> Final Focus<span class="speaker-subtext">${t1s2}</span>`, side: t1side, minutes: 2, script: `${t1side} (${t1s2}), you have 2 minutes for your Final Focus.` },
-                { name: `<strong>${t2side}</strong> Final Focus<span class="speaker-subtext">${t2s2}</span>`, side: t2side, minutes: 2, script: `${t2side} (${t2s2}), you have 2 minutes for your Final Focus.` }
-            ],
-            prep: [
-                { name: `${t1side} Prep Time`, side: t1side, minutes: 3 },
-                { name: `${t2side} Prep Time`, side: t2side, minutes: 3 }
-            ]
-        };
-    }
+Team Speaking Second:
+Team Code: [${t2code}]
+Side: [${t2side}]
+First Speaker Name: [${t2s1}]
+Second Speaker Name: [${t2s2}]`;
 
-    function initAudio() {
-        if (!audioCtx) {
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        }
-        if (audioCtx.state === 'suspended') {
-            audioCtx.resume();
-        }
-    }
+    navigator.clipboard.writeText(text).then(() => {
+        showToast('✓ Round setup copied to clipboard!');
+    }).catch(() => {
+        let ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.cssText = 'position:fixed;left:-9999px;top:0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        showToast('✓ Round setup copied to clipboard!');
+    });
+}
 
-    function playBell(times) {
-        if (!document.getElementById('bell-toggle').checked) return;
-        
-        for (let i = 0; i < times; i++) {
-            setTimeout(() => {
-                const osc = audioCtx.createOscillator();
-                const gainNode = audioCtx.createGain();
-                osc.connect(gainNode);
-                gainNode.connect(audioCtx.destination);
-                
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-                
-                gainNode.gain.setValueAtTime(1, audioCtx.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1.5);
-                
-                osc.start(audioCtx.currentTime);
-                osc.stop(audioCtx.currentTime + 1.5);
-            }, i * 600);
-        }
-    }
+function copyPolicySetup() {
+    let resolution = document.getElementById('cx-resolution')?.value.trim() || '';
+    let acode = document.getElementById('cx-a-code')?.value.trim() || '';
+    let ncode = document.getElementById('cx-n-code')?.value.trim() || '';
+    let a1 = document.getElementById('cx-a1')?.value.trim() || '';
+    let a2 = document.getElementById('cx-a2')?.value.trim() || '';
+    let n1 = document.getElementById('cx-n1')?.value.trim() || '';
+    let n2 = document.getElementById('cx-n2')?.value.trim() || '';
 
-    function formatTime(seconds) {
-        let m = Math.floor(seconds / 60).toString().padStart(2, '0');
-        let s = (seconds % 60).toString().padStart(2, '0');
-        return `${m}:${s}`;
-    }
+    let text =
+`Resolution: [${resolution}]
 
-    function getSideClass(side) {
-        let lower = side.toLowerCase();
-        if (lower.includes('pro') || lower.includes('aff')) return 'pro';
-        if (lower.includes('con') || lower.includes('neg') || lower.includes('opp')) return 'opp';
-        return 'both';
-    }
+Affirmative Team:
+Team Code: [${acode}]
+1st Speaker (1A): [${a1}]
+2nd Speaker (2A): [${a2}]
 
-    function calculateTotalTime() {
-        return appData.stages.reduce((total, stage) => total + stage.timeRemaining, 0);
-    }
+Negative Team:
+Team Code: [${ncode}]
+1st Speaker (1N): [${n1}]
+2nd Speaker (2N): [${n2}]`;
 
-    function loadFormat(formatKey) {
-        if (appData.interval) {
-            clearInterval(appData.interval);
-            appData.interval = null;
-        }
-        appData.activeStageId = null;
-        
-        if (formatKey === 'pf') {
-            document.getElementById('pf-settings-container').style.display = 'grid';
-        } else {
-            document.getElementById('pf-settings-container').style.display = 'none';
-        }
-        
-        let format = formatKey === 'pf' ? getPFStages() : formats[formatKey];
-        
-        appData.stages = format.stages.map((s, i) => ({
-            id: 'stage_' + i,
-            name: s.name,
-            side: s.side,
-            durationSeconds: s.minutes * 60,
-            timeRemaining: s.minutes * 60,
-            status: 'pending',
-            script: s.script
-        }));
-        
-        if (format.prep && format.prep.length > 0) {
-            appData.prepPools = format.prep.map((p, i) => ({
-                id: 'prep_' + i,
-                name: p.name,
-                side: p.side,
-                durationSeconds: p.minutes * 60,
-                timeRemaining: p.minutes * 60,
-                status: 'pending',
-                script: p.script
-            }));
-            document.getElementById('prep-section').style.display = 'block';
-        } else {
-            appData.prepPools = [];
-            document.getElementById('prep-section').style.display = 'none';
-        }
-        
+    navigator.clipboard.writeText(text).then(() => {
+        showToast('✓ Round setup copied to clipboard!');
+    }).catch(() => {
+        let ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.cssText = 'position:fixed;left:-9999px;top:0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        showToast('✓ Round setup copied to clipboard!');
+    });
+}
+
+function updatePolicyNames() {
+    if (currentFormat === 'policy') {
+        let cx = getPolicyStages();
+        appData.stages.forEach((s,i)=>{ s.name=cx.stages[i].name; s.speakerName=cx.stages[i].speakerName; s.speakerPos=cx.stages[i].speakerPos; s.script=cx.stages[i].script; });
         renderUI();
     }
+}
 
-    function updatePFNames() {
-        if (document.getElementById('format-select').value === 'pf') {
-            let pfFormat = getPFStages();
-            appData.stages.forEach((s, i) => {
-                s.name = pfFormat.stages[i].name;
-                s.side = pfFormat.stages[i].side;
-                s.script = pfFormat.stages[i].script;
-            });
-            appData.prepPools.forEach((p, i) => {
-                p.name = pfFormat.prep[i].name;
-                p.side = pfFormat.prep[i].side;
-                p.script = pfFormat.prep[i].script;
-            });
-            renderUI();
-        }
+function loadFormat(fk) {
+    if (appData.interval) { clearInterval(appData.interval); appData.interval=null; }
+    appData.activeStageId=null; appData.notes={};
+    let isPF = (fk === 'pf' || fk === 'pf_ms');
+    let isPolicy = (fk === 'policy');
+    document.getElementById('pf-panel').style.display = isPF ? 'block' : 'none';
+    document.getElementById('policy-panel').style.display = isPolicy ? 'block' : 'none';
+    let fmt = isPF ? getPFStages() : isPolicy ? getPolicyStages() : formats[fk];
+    if (!fmt) return;
+    appData.stages = fmt.stages.map((s,i)=>({id:'stage_'+i,name:s.name,side:s.side,speakerName:s.speakerName||null,speakerPos:s.speakerPos||null,durationSeconds:s.minutes*60,timeRemaining:s.minutes*60,status:'pending',script:s.script}));
+    if (fmt.prep&&fmt.prep.length) {
+        appData.prepPools = fmt.prep.map((p,i)=>({id:'prep_'+i,name:p.name,side:p.side,speakerName:p.speakerName||null,speakerPos:p.speakerPos||null,durationSeconds:p.minutes*60,timeRemaining:p.minutes*60,status:'pending'}));
+        document.getElementById('prep-section').style.display='block';
+    } else {
+        appData.prepPools=[];
+        document.getElementById('prep-section').style.display='none';
     }
+    renderUI();
+}
 
-    function changeFormat() {
-        const selected = document.getElementById('format-select').value;
-        loadFormat(selected);
-    }
-
-    function tick() {
-        let currentTimer = appData.stages.find(s => s.id === appData.activeStageId) || 
-                           appData.prepPools.find(p => p.id === appData.activeStageId);
-        
-        if (currentTimer && currentTimer.timeRemaining > 0) {
-            currentTimer.timeRemaining--;
-            
-            if (currentTimer.timeRemaining === 30) {
-                playBell(1);
-            }
-            if (currentTimer.timeRemaining === 0) {
-                playBell(2);
-                currentTimer.status = 'completed';
-                clearInterval(appData.interval);
-                appData.interval = null;
-                appData.activeStageId = null;
-            }
-            renderUI();
-        }
-    }
-
-    function toggleTimer(id) {
-        initAudio(); 
-        
-        let target = appData.stages.find(s => s.id === id) || appData.prepPools.find(p => p.id === id);
-        
-        if (appData.activeStageId === id && appData.interval) {
-            clearInterval(appData.interval);
-            appData.interval = null;
-            target.status = 'paused';
-        } else {
-            if (appData.interval) clearInterval(appData.interval);
-            
-            let prev = [...appData.stages, ...appData.prepPools].find(s => s.id === appData.activeStageId);
-            if (prev && prev.timeRemaining > 0) prev.status = 'paused';
-            
-            target.status = 'active';
-            appData.activeStageId = id;
-            appData.interval = setInterval(tick, 1000);
-        }
+function updatePFNames() {
+    if (currentFormat === 'pf' || currentFormat === 'pf_ms') {
+        let pf = getPFStages();
+        appData.stages.forEach((s,i)=>{ s.name=pf.stages[i].name;s.side=pf.stages[i].side;s.speakerName=pf.stages[i].speakerName;s.speakerPos=pf.stages[i].speakerPos;s.script=pf.stages[i].script; });
+        appData.prepPools.forEach((p,i)=>{ p.name=pf.prep[i].name;p.side=pf.prep[i].side; });
         renderUI();
     }
+}
 
-    function resetTimer(id) {
-        let target = appData.stages.find(s => s.id === id) || appData.prepPools.find(p => p.id === id);
-        target.timeRemaining = target.durationSeconds;
-        target.status = 'pending';
-        
-        if (appData.activeStageId === id) {
-            clearInterval(appData.interval);
-            appData.interval = null;
-            appData.activeStageId = null;
+let currentFormat = 'pf';
+
+function changeFormatFromSelect(sel) {
+    const wrap = sel.closest('.format-select-wrap');
+    if (wrap.dataset.locked === 'true') {
+        showToast('⚠ Format is locked while a round is in progress — click Reset to start over.');
+        // reset select to current format
+        sel.value = currentFormat;
+        return;
+    }
+    currentFormat = sel.value;
+    loadFormat(currentFormat);
+}
+
+// keep old changeFormat for any lingering references
+function changeFormat(fk, btn) {
+    const wrap = document.querySelector('.format-select-wrap');
+    if (wrap && wrap.dataset.locked === 'true') {
+        showToast('⚠ Format is locked while a round is in progress — click Reset to start over.');
+        return;
+    }
+    currentFormat = fk;
+    document.getElementById('format-select').value = fk;
+    loadFormat(fk);
+}
+
+function updateTimerDisplays() {
+    [...appData.stages,...appData.prepPools].forEach(item=>{
+        let pct = Math.max(0,(item.timeRemaining/item.durationSeconds)*100);
+        let t = document.getElementById('timer_'+item.id);
+        let f = document.getElementById('fill_'+item.id);
+        if (t) { t.innerText=formatTime(item.timeRemaining); t.className='card-timer'+(item.timeRemaining<0?' overtime':''); }
+        if (f) f.style.width=pct+'%';
+    });
+    let total = formatTime(calculateTotalTime());
+    document.getElementById('total-time').innerText=total;
+    document.getElementById('sticky-total-time').innerText=total;
+    let prepLeft=appData.prepPools.reduce((s,p)=>s+Math.max(0,p.timeRemaining),0);
+    let prepStr=prepLeft>0?`+ ${formatTime(prepLeft)} prep`:'';
+    document.getElementById('total-prep-time').innerText=prepStr;
+    document.getElementById('sticky-prep-time').innerText=prepStr;
+}
+
+function tick() {
+    let cur=[...appData.stages,...appData.prepPools].find(s=>s.id===appData.activeStageId);
+    if (!cur) return;
+    cur.timeRemaining--;
+    if (cur.timeRemaining===30) { playBell(1); triggerFlash(30); }
+    if (cur.timeRemaining===0) {
+        playBell(2); triggerFlash(0);
+        let isPrep=cur.id.startsWith('prep_');
+        if (isPrep) { cur.status='completed'; clearInterval(appData.interval); appData.interval=null; appData.activeStageId=null; renderUI(); return; }
+    }
+    updateTimerDisplays();
+}
+
+function toggleTimer(id) {
+    initAudio();
+    let target=[...appData.stages,...appData.prepPools].find(s=>s.id===id);
+    if (appData.activeStageId===id&&appData.interval) {
+        clearInterval(appData.interval); appData.interval=null;
+        let isLast=appData.stages.length>0&&appData.stages[appData.stages.length-1].id===id;
+        if (target.timeRemaining<=0||isLast) target.status='completed'; else target.status='paused';
+    } else {
+        if (appData.interval) clearInterval(appData.interval);
+        let prev=[...appData.stages,...appData.prepPools].find(s=>s.id===appData.activeStageId);
+        if (prev&&prev.id!==id) {
+            if (prev.timeRemaining<=0) { prev.status='completed'; }
+            else if (prev.id.startsWith('prep_')) { prev.status=prev.timeRemaining===prev.durationSeconds?'pending':'paused'; }
+            else {
+                let pi=appData.stages.findIndex(s=>s.id===prev.id);
+                let ti=id.startsWith('stage_')?appData.stages.findIndex(s=>s.id===id):999;
+                prev.status=ti<pi?'paused':'completed';
+            }
         }
-        renderUI();
+        target.status='active'; appData.activeStageId=id;
+        appData.interval=setInterval(tick,1000);
+    }
+    renderUI();
+}
+
+function resetTimer(id) {
+    let t=[...appData.stages,...appData.prepPools].find(s=>s.id===id);
+    if (t) { t.timeRemaining=t.durationSeconds; t.status='pending'; }
+    if (appData.activeStageId===id) { clearInterval(appData.interval); appData.interval=null; appData.activeStageId=null; }
+    renderUI();
+}
+
+function updateNote(id,val) { appData.notes[id]=val; }
+
+function toggleGlobalFlow() {
+    appData.globalFlowEnabled=document.getElementById('flow-toggle').checked;
+    let btn=document.getElementById('btn-copy-flow');
+    btn.disabled=!appData.globalFlowEnabled;
+    btn.style.opacity=appData.globalFlowEnabled?'1':'0.4';
+    btn.style.cursor=appData.globalFlowEnabled?'pointer':'not-allowed';
+    renderUI();
+}
+
+function renderUI() {
+    let isUnderway=appData.stages.some(s=>s.status!=='pending')||appData.prepPools.some(p=>p.status!=='pending');
+    const wrap = document.querySelector('.format-select-wrap');
+    if (wrap) {
+        wrap.dataset.locked = isUnderway ? 'true' : 'false';
+        wrap.classList.toggle('locked', isUnderway);
+        wrap.title = isUnderway ? 'Format locked — round in progress' : '';
     }
 
-    function globalReset() {
-        if (confirm("Are you sure you want to completely reset the round?")) {
-            if (appData.interval) {
-                clearInterval(appData.interval);
-                appData.interval = null;
-            }
-            appData.activeStageId = null;
-            
-            appData.stages.forEach(s => {
-                s.timeRemaining = s.durationSeconds;
-                s.status = 'pending';
-            });
-            appData.prepPools.forEach(p => {
-                p.timeRemaining = p.durationSeconds;
-                p.status = 'pending';
-            });
-            
-            if (document.getElementById('format-select').value === 'pf') {
-                document.getElementById('t1s1').value = "";
-                document.getElementById('t1s2').value = "";
-                document.getElementById('t2s1').value = "";
-                document.getElementById('t2s2').value = "";
-                updatePFNames();
-            } else {
-                renderUI();
-            }
+    // Show congress note if applicable
+    let existingNote = document.getElementById('congress-note');
+    if (currentFormat === 'congress') {
+        if (!existingNote) {
+            let note = document.createElement('div');
+            note.id = 'congress-note';
+            note.style.cssText = 'background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--gold);border-radius:var(--radius-sm);padding:12px 16px;margin-bottom:14px;font-size:0.82rem;color:var(--text-dim);line-height:1.5;';
+            note.innerHTML = '<strong style="color:var(--gold)">📋 Congressional Debate Mode</strong> — This timer shows one typical piece of legislation\'s debate cycle. The first two speeches each have 2-minute Q&A; all subsequent speeches have 1-minute Q&A. Tap <strong>Reset</strong> on any card to reuse it for the next speech on the same or a new piece of legislation.';
+            document.getElementById('stages-container').before(note);
         }
+    } else if (existingNote) {
+        existingNote.remove();
     }
 
-    function renderUI() {
-        let foundNext = false;
-        appData.stages.forEach(s => {
-            s.isNext = false;
-            if (s.status !== 'completed' && !foundNext) {
-                s.isNext = true;
-                foundNext = true;
-            }
-        });
+    let firstPendingIdx=appData.stages.findIndex(s=>s.status==='pending');
+    if (firstPendingIdx===-1) firstPendingIdx=appData.stages.length;
 
-        let prepContainer = document.getElementById('prep-container');
-        prepContainer.innerHTML = appData.prepPools.map(p => {
-            let pct = (p.timeRemaining / p.durationSeconds) * 100;
-            return `
-            <div class="stage-card ${p.status}">
-                <div class="progress-bar-bg"></div>
-                <div class="progress-bar-fill" style="width: ${pct}%"></div>
-                <div class="checkmark">✓</div>
-                <div class="stage-info">
-                    <h3>${p.name}</h3>
-                    <span class="side-badge ${getSideClass(p.side)}">${p.side}</span>
-                    ${p.script ? `<span class="judge-script">"${p.script}"</span>` : ''}
+    // PREP
+    document.getElementById('prep-container').innerHTML=appData.prepPools.map(p=>{
+        let pct=Math.max(0,(p.timeRemaining/p.durationSeconds)*100);
+        let sc=getSideClass(p.side);
+        let actionBtn='';
+        if (appData.activeStageId===p.id&&appData.interval) actionBtn=`<button class="action-btn action-pause" onclick="toggleTimer('${p.id}')">Pause</button>`;
+        else if (p.timeRemaining>0) actionBtn=`<button class="action-btn action-start" onclick="toggleTimer('${p.id}')">${p.timeRemaining<p.durationSeconds?'Resume':'Start'}</button>`;
+        // Build speaker sub-label from stages for this side
+        let side = p.side.toLowerCase();
+        let sideNames = appData.stages
+            .filter(s => s.speakerName && s.speakerName !== 'All' && getSideClass(s.side) === sc)
+            .map(s => s.speakerName)
+            .filter((v,i,a) => a.indexOf(v) === i); // unique
+        let speakerSub = sideNames.length ? `<div class="card-sub" style="margin-top:4px;">[${sideNames.join(' &amp; ')}]</div>` : '';
+        return `<div class="prep-card ${p.status}">
+            <div class="accent-bar"></div>
+            <div class="progress-track"><div class="progress-fill" id="fill_${p.id}" style="width:${pct}%"></div></div>
+            <div class="card-row">
+                <div class="card-info">
+                    <div class="card-name">${p.name}${speakerSub}</div>
+                    <span class="side-pill ${sc}">${p.side}</span>
                 </div>
-                <div class="stage-timer">${formatTime(p.timeRemaining)}</div>
-                <div class="controls">
-                    <button class="${appData.activeStageId === p.id && appData.interval ? 'btn-pause' : 'btn-start'}" 
-                            onclick="toggleTimer('${p.id}')">
-                        ${appData.activeStageId === p.id && appData.interval ? 'Pause' : 'Start'}
+                <div class="checkmark-icon">✓</div>
+                <div class="card-timer" id="timer_${p.id}">${formatTime(p.timeRemaining)}</div>
+                <div class="card-actions">
+                    ${actionBtn}
+                    <button class="action-reset-icon" onclick="resetPrepTimer('${p.id}')" title="Reset">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><polyline points="3 3 3 8 8 8"/></svg>
                     </button>
-                    <button class="btn-reset" onclick="resetTimer('${p.id}')">Reset</button>
                 </div>
             </div>
-            `;
-        }).join('');
+        </div>`;
+    }).join('');
 
-        let stagesContainer = document.getElementById('stages-container');
-        stagesContainer.innerHTML = appData.stages.map((s, i) => {
-            let pct = (s.timeRemaining / s.durationSeconds) * 100;
-            return `
-            <div class="stage-card ${s.status} ${s.isNext && s.status !== 'active' ? 'next-stage' : ''}">
-                <div class="progress-bar-bg"></div>
-                <div class="progress-bar-fill" style="width: ${pct}%"></div>
-                <div class="checkmark">✓</div>
-                <div class="stage-info">
-                    <h3>${i + 1}. ${s.name}</h3>
-                    <span class="side-badge ${getSideClass(s.side)}">${s.side}</span>
-                    ${s.script ? `<span class="judge-script">"${s.script}"</span>` : ''}
+    // STAGES
+    document.getElementById('stages-container').innerHTML=appData.stages.map((s,i)=>{
+        let pct=Math.max(0,(s.timeRemaining/s.durationSeconds)*100);
+        let sc=getSideClass(s.side);
+        let isLocked=s.status==='pending'&&i>firstPendingIdx;
+        let isNext=s.status==='pending'&&i===firstPendingIdx;
+        let isExtemprep=s.name.includes('Mandatory Prep Time');
+
+        let actionBtn='';
+        if (appData.activeStageId===s.id&&appData.interval) actionBtn=`<button class="action-btn action-pause" onclick="toggleTimer('${s.id}')">Pause</button>`;
+        else if (s.timeRemaining<=0) actionBtn='';
+        else if (isLocked) actionBtn=`<button class="action-btn action-start" disabled title="Complete previous stages first">Start</button>`;
+        else actionBtn=`<button class="action-btn action-start" onclick="toggleTimer('${s.id}')">${s.timeRemaining<s.durationSeconds?'Resume':'Start'}</button>`;
+
+        let flow=(appData.globalFlowEnabled&&!isExtemprep)?`<div class="flow-drawer"><textarea id="flow_${s.id}" oninput="updateNote('${s.id}',this.value)" placeholder="Flow notes for this speech…">${appData.notes[s.id]||''}</textarea></div>`:'';
+
+        let cardClass=`stage-card ${s.status}${isNext&&s.status!=='active'?' next-up':''}${isLocked?' locked':''}`;
+        return `<div class="${cardClass}">
+            <div class="accent-bar"></div>
+            <div class="progress-track"><div class="progress-fill" id="fill_${s.id}" style="width:${pct}%"></div></div>
+            <div class="card-row">
+                <div class="card-number">${s.status==='completed'?'✓':i+1}</div>
+                <div class="card-info">
+                    <div class="card-name">${s.name}</div>
+                    <span class="side-pill ${sc}">${s.side}</span>
+                    ${s.script?`<span class="judge-script">"${s.script}"</span>`:''}
                 </div>
-                <div class="stage-timer">${formatTime(s.timeRemaining)}</div>
-                <div class="controls">
-                    <button class="${appData.activeStageId === s.id && appData.interval ? 'btn-pause' : 'btn-start'}" 
-                            onclick="toggleTimer('${s.id}')">
-                        ${appData.activeStageId === s.id && appData.interval ? 'Pause' : 'Start'}
-                    </button>
-                    <button class="btn-reset" onclick="resetTimer('${s.id}')">Reset</button>
+                <div class="card-timer ${s.timeRemaining<0?'overtime':''}" id="timer_${s.id}">${formatTime(s.timeRemaining)}</div>
+                <div class="card-actions">
+                    ${actionBtn}
+                    <button class="action-btn action-reset" onclick="resetTimer('${s.id}')">Reset</button>
                 </div>
             </div>
-            `;
-        }).join('');
+            ${flow}
+        </div>`;
+    }).join('');
 
-        document.getElementById('total-time').innerText = formatTime(calculateTotalTime());
-    }
+    updateTimerDisplays();
+}
 
-    document.addEventListener('keydown', (e) => {
-        if (e.code === 'Space' && appData.activeStageId) {
-            const tag = e.target.tagName.toUpperCase();
-            if (tag !== 'INPUT' && tag !== 'SELECT' && tag !== 'BUTTON') {
-                e.preventDefault();
-                toggleTimer(appData.activeStageId);
-            }
+// ─── ANALYTICS ───
+function buildUsageStats() {
+    let stats={byTeam:{},bySpeaker:{}};
+    appData.stages.forEach(s=>{
+        if(s.side!=='Both'&&!stats.byTeam[s.side]) stats.byTeam[s.side]={speeches:{had:0,used:0,unused:0,over:0},prep:{had:0,used:0,unused:0,over:0,zeroPrep:false}};
+        if(s.speakerName&&s.speakerName!=='All'){let k=s.speakerPos?`${s.speakerPos} (${s.speakerName})`:s.speakerName;if(!stats.bySpeaker[k])stats.bySpeaker[k]={speeches:{had:0,used:0,unused:0,over:0}};}
+    });
+    appData.prepPools.forEach(p=>{
+        if(p.side!=='Both'){if(!stats.byTeam[p.side])stats.byTeam[p.side]={speeches:{had:0,used:0,unused:0,over:0},prep:{had:0,used:0,unused:0,over:0,zeroPrep:false}};stats.byTeam[p.side].prep.zeroPrep=(p.timeRemaining===p.durationSeconds);}
+    });
+    [...appData.stages,...appData.prepPools].forEach(item=>{
+        if(item.side==='Both') return;
+        let over=item.timeRemaining<0?Math.abs(item.timeRemaining):0;
+        let left=item.timeRemaining<0?0:item.timeRemaining;
+        let used=item.durationSeconds-left;
+        if(over<=10)over=0;
+        if(item.status==='pending'){used=0;left=item.durationSeconds;over=0;}
+        let td=stats.byTeam[item.side];
+        if(item.id.startsWith('prep_')){td.prep.had+=item.durationSeconds;td.prep.used+=used;td.prep.unused+=left;td.prep.over+=over;}
+        else{td.speeches.had+=item.durationSeconds;td.speeches.used+=used;td.speeches.unused+=left;td.speeches.over+=over;}
+        if(item.speakerName&&item.speakerName!=='All'&&item.speakerName!=='Team'&&!item.id.startsWith('prep_')){
+            let k=item.speakerPos?`${item.speakerPos} (${item.speakerName})`:item.speakerName;
+            let sd=stats.bySpeaker[k];
+            sd.speeches.had+=item.durationSeconds;sd.speeches.used+=used;sd.speeches.unused+=left;sd.speeches.over+=over;
         }
     });
+    return stats;
+}
 
-    window.onload = () => {
-        loadFormat('pf'); 
-    };
+function showAnalytics() {
+    let stats=buildUsageStats();
+    let html='';
+    if(!Object.keys(stats.byTeam).length){html='<p style="color:var(--text-muted)">No timers started yet.</p>';}
+    else {
+        for(let side in stats.byTeam){
+            let td=stats.byTeam[side];
+            if(!td.speeches.had&&!td.prep.had) continue;
+            html+=`<div class="analytics-team-block"><div class="analytics-team-name">${side}${td.prep.zeroPrep?`<span class="zero-prep-badge">⚠ 0 Prep Used</span>`:''}</div>`;
+            if(td.speeches.had){
+                let up=((td.speeches.used/td.speeches.had)*100).toFixed(1);
+                html+=`<div class="bar-row"><div class="bar-row-label"><span>Speeches</span><span>${formatTime(td.speeches.used)} used of ${formatTime(td.speeches.had)} · <strong>${formatTime(td.speeches.unused)}</strong> left${td.speeches.over>0?` · <span style="color:var(--red)">+${formatTime(td.speeches.over)} OT</span>`:''}</span></div><div class="bar-track"><div class="bar-used" style="width:${up}%">${up>10?'Used':''}</div></div></div>`;
+            }
+            if(td.prep.had){
+                let pp=((td.prep.used/td.prep.had)*100).toFixed(1);
+                html+=`<div class="bar-row"><div class="bar-row-label"><span>Prep</span><span>${formatTime(td.prep.used)} used of ${formatTime(td.prep.had)} · <strong>${formatTime(td.prep.unused)}</strong> left</span></div><div class="bar-track"><div class="bar-used bar-prep-used" style="width:${pp}%">${pp>10?'Used':''}</div></div></div>`;
+            }
+            html+='</div>';
+        }
+        if(Object.keys(stats.bySpeaker).length){
+            html+=`<div style="font-size:0.8rem;font-weight:700;color:var(--text-muted);letter-spacing:0.1em;text-transform:uppercase;margin:20px 0 10px">By Speaker</div>`;
+            for(let spk in stats.bySpeaker){
+                let sd=stats.bySpeaker[spk];
+                if(!sd.speeches.had) continue;
+                let up=((sd.speeches.used/sd.speeches.had)*100).toFixed(1);
+                html+=`<div class="analytics-team-block"><div class="analytics-team-name">${spk}</div><div class="bar-row"><div class="bar-row-label"><span>Speeches</span><span>${formatTime(sd.speeches.used)} / ${formatTime(sd.speeches.had)}${sd.speeches.over>0?` · <span style="color:var(--red)">+${formatTime(sd.speeches.over)} OT</span>`:''}</span></div><div class="bar-track"><div class="bar-used" style="width:${up}%"></div></div></div></div>`;
+            }
+        }
+    }
+    document.getElementById('analytics-content').innerHTML=html;
+    openModal('analytics-modal');
+}
+
+function copyFlow() {
+    let htmlContent=`<div style="font-family:Georgia,serif;color:#1a1a2e;background:#ffffff;padding:8px;">`;
+
+    // ── Round Setup Header ──────────────────────────────────────────
+    if (currentFormat === 'pf' || currentFormat === 'pf_ms') {
+        let resolution = document.getElementById('pf-resolution')?.value.trim() || '';
+        let t1side = document.getElementById('t1-side')?.value || 'Pro';
+        let t2side = t1side === 'Pro' ? 'Con' : 'Pro';
+        let t1code = document.getElementById('t1-code')?.value.trim() || '';
+        let t2code = document.getElementById('t2-code')?.value.trim() || '';
+        let t1s1 = document.getElementById('t1s1')?.value.trim() || '';
+        let t1s2 = document.getElementById('t1s2')?.value.trim() || '';
+        let t2s1 = document.getElementById('t2s1')?.value.trim() || '';
+        let t2s2 = document.getElementById('t2s2')?.value.trim() || '';
+        if (resolution || t1code || t2code || t1s1 || t2s1) {
+            htmlContent += `<div style="border:1px solid #e0e7ff;border-left:4px solid #1565c0;border-radius:6px;padding:16px 20px;margin-bottom:24px;background:#f7f9ff;">`;
+            htmlContent += `<h2 style="font-family:Arial,sans-serif;font-size:15px;color:#1565c0;margin:0 0 12px;letter-spacing:0.03em;">PUBLIC FORUM — ROUND SETUP</h2>`;
+            if (resolution) htmlContent += `<p style="font-family:Arial,sans-serif;font-size:12px;margin:0 0 12px;"><strong>Resolution:</strong> [${resolution}]</p>`;
+            htmlContent += `<div style="display:flex;gap:32px;flex-wrap:wrap;">`;
+            htmlContent += `<div><p style="font-family:Arial,sans-serif;font-size:12px;margin:0 0 4px;font-weight:bold;color:#1565c0;">Team Speaking First</p>
+                <p style="font-family:Arial,sans-serif;font-size:12px;margin:2px 0;">Team Code: [${t1code}]</p>
+                <p style="font-family:Arial,sans-serif;font-size:12px;margin:2px 0;">Side: [${t1side}]</p>
+                <p style="font-family:Arial,sans-serif;font-size:12px;margin:2px 0;">First Speaker: [${t1s1}]</p>
+                <p style="font-family:Arial,sans-serif;font-size:12px;margin:2px 0;">Second Speaker: [${t1s2}]</p></div>`;
+            htmlContent += `<div><p style="font-family:Arial,sans-serif;font-size:12px;margin:0 0 4px;font-weight:bold;color:#1565c0;">Team Speaking Second</p>
+                <p style="font-family:Arial,sans-serif;font-size:12px;margin:2px 0;">Team Code: [${t2code}]</p>
+                <p style="font-family:Arial,sans-serif;font-size:12px;margin:2px 0;">Side: [${t2side}]</p>
+                <p style="font-family:Arial,sans-serif;font-size:12px;margin:2px 0;">First Speaker: [${t2s1}]</p>
+                <p style="font-family:Arial,sans-serif;font-size:12px;margin:2px 0;">Second Speaker: [${t2s2}]</p></div>`;
+            htmlContent += `</div></div>`;
+            htmlContent += `<hr style="border:none;border-top:2px solid #c7d2fe;margin:0 0 20px;">`;
+        }
+    } else if (currentFormat === 'policy') {
+        let resolution = document.getElementById('cx-resolution')?.value.trim() || '';
+        let acode = document.getElementById('cx-a-code')?.value.trim() || '';
+        let ncode = document.getElementById('cx-n-code')?.value.trim() || '';
+        let a1 = document.getElementById('cx-a1')?.value.trim() || '';
+        let a2 = document.getElementById('cx-a2')?.value.trim() || '';
+        let n1 = document.getElementById('cx-n1')?.value.trim() || '';
+        let n2 = document.getElementById('cx-n2')?.value.trim() || '';
+        if (resolution || acode || ncode || a1 || n1) {
+            htmlContent += `<div style="border:1px solid #e0e7ff;border-left:4px solid #1565c0;border-radius:6px;padding:16px 20px;margin-bottom:24px;background:#f7f9ff;">`;
+            htmlContent += `<h2 style="font-family:Arial,sans-serif;font-size:15px;color:#1565c0;margin:0 0 12px;letter-spacing:0.03em;">POLICY CX — ROUND SETUP</h2>`;
+            if (resolution) htmlContent += `<p style="font-family:Arial,sans-serif;font-size:12px;margin:0 0 12px;"><strong>Resolution:</strong> [${resolution}]</p>`;
+            htmlContent += `<div style="display:flex;gap:32px;flex-wrap:wrap;">`;
+            htmlContent += `<div><p style="font-family:Arial,sans-serif;font-size:12px;margin:0 0 4px;font-weight:bold;color:#1565c0;">Affirmative Team</p>
+                <p style="font-family:Arial,sans-serif;font-size:12px;margin:2px 0;">Team Code: [${acode}]</p>
+                <p style="font-family:Arial,sans-serif;font-size:12px;margin:2px 0;">1st Speaker (1A): [${a1}]</p>
+                <p style="font-family:Arial,sans-serif;font-size:12px;margin:2px 0;">2nd Speaker (2A): [${a2}]</p></div>`;
+            htmlContent += `<div><p style="font-family:Arial,sans-serif;font-size:12px;margin:0 0 4px;font-weight:bold;color:#1565c0;">Negative Team</p>
+                <p style="font-family:Arial,sans-serif;font-size:12px;margin:2px 0;">Team Code: [${ncode}]</p>
+                <p style="font-family:Arial,sans-serif;font-size:12px;margin:2px 0;">1st Speaker (1N): [${n1}]</p>
+                <p style="font-family:Arial,sans-serif;font-size:12px;margin:2px 0;">2nd Speaker (2N): [${n2}]</p></div>`;
+            htmlContent += `</div></div>`;
+            htmlContent += `<hr style="border:none;border-top:2px solid #c7d2fe;margin:0 0 20px;">`;
+        }
+    }
+
+    let hasNotes=false;
+    let notesHtml='';
+    appData.stages.forEach((s,i)=>{
+        if(s.name.includes('Mandatory Prep Time')) return;
+        let note=appData.notes&&appData.notes[s.id]?appData.notes[s.id].trim():'';
+        if(note){
+            hasNotes=true;
+            let cleanName=s.name.replace(/<span[^>]*>.*?<\/span>/gi,'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
+            let spkInfo=s.speakerPos?` [${s.speakerPos}]`:'';
+            if(s.speakerName&&s.speakerName!=='All') spkInfo+=` (${s.speakerName})`;
+            notesHtml+=`<h3 style="font-family:Arial,sans-serif;color:#1565c0;font-size:14px;border-bottom:2px solid #e0e7ff;padding-bottom:6px;margin:20px 0 8px">Stage ${i+1}: ${cleanName}${spkInfo}</h3>`;
+            notesHtml+=`<div style="white-space:pre-wrap;margin-bottom:20px;line-height:1.6;font-size:13px;color:#222;">${note}</div>`;
+        }
+    });
+    if(!hasNotes){triggerFlash(null,'NO NOTES','rgba(100,100,120,0.95)');return;}
+    htmlContent+=`<h2 style="font-family:Arial,sans-serif;font-size:15px;color:#1a1a2e;margin:0 0 4px;letter-spacing:0.03em;">📝 FLOW NOTES</h2>`;
+    htmlContent+=notesHtml;
+
+    let stats=buildUsageStats();
+    if(Object.keys(stats.byTeam).length){
+        htmlContent+=`<hr style="border:none;border-top:2px solid #c7d2fe;margin:24px 0 20px;">`;
+        htmlContent+=`<div style="margin-top:0;padding-top:0;">`;
+        htmlContent+=`<h2 style="font-family:Arial,sans-serif;font-size:16px;color:#1a1a2e;margin:0 0 16px">📊 Round Analytics</h2>`;
+
+        // Team table
+        htmlContent+=`<h3 style="font-family:Arial,sans-serif;font-size:13px;color:#555;margin:0 0 8px;letter-spacing:0.05em;text-transform:uppercase;">Team Summary</h3>`;
+        htmlContent+=`<table cellpadding="10" cellspacing="0" style="border-collapse:collapse;width:100%;font-family:Arial,sans-serif;font-size:12px;margin-bottom:24px;">`;
+        htmlContent+=`<thead><tr style="background:#1565c0;color:#fff;">
+            <th style="text-align:left;padding:10px 12px;border-radius:6px 0 0 0;">Team</th>
+            <th style="padding:10px 12px;">Speeches Used</th>
+            <th style="padding:10px 12px;">Speeches Left</th>
+            <th style="padding:10px 12px;">Prep Used</th>
+            <th style="padding:10px 12px;">Prep Left</th>
+            <th style="padding:10px 12px;border-radius:0 6px 0 0;">Overtime</th>
+        </tr></thead><tbody>`;
+        let rowAlt=false;
+        for(let side in stats.byTeam){
+            let td=stats.byTeam[side];
+            if(!td.speeches.had&&!td.prep.had) continue;
+            let ot=(td.speeches.over+td.prep.over)>0?`<span style="color:#c62828;font-weight:bold">${formatTime(td.speeches.over+td.prep.over)}</span>`:'-';
+            let rowBg=rowAlt?'#f0f4ff':'#ffffff';
+            let prepNote=td.prep.zeroPrep?`<br><span style="color:#d84315;font-size:11px;">⚠ 0 Prep Used</span>`:'';
+            htmlContent+=`<tr style="background:${rowBg};">
+                <td style="padding:10px 12px;border-bottom:1px solid #e0e7ef;font-weight:bold;color:#1a1a2e;">${side}${prepNote}</td>
+                <td style="padding:10px 12px;border-bottom:1px solid #e0e7ef;text-align:center;">${formatTime(td.speeches.used)} <span style="color:#888">/ ${formatTime(td.speeches.had)}</span></td>
+                <td style="padding:10px 12px;border-bottom:1px solid #e0e7ef;text-align:center;font-weight:bold;color:#1565c0;">${formatTime(td.speeches.unused)}</td>
+                <td style="padding:10px 12px;border-bottom:1px solid #e0e7ef;text-align:center;">${formatTime(td.prep.used)} <span style="color:#888">/ ${formatTime(td.prep.had)}</span></td>
+                <td style="padding:10px 12px;border-bottom:1px solid #e0e7ef;text-align:center;font-weight:bold;color:#6a1b9a;">${formatTime(td.prep.unused)}</td>
+                <td style="padding:10px 12px;border-bottom:1px solid #e0e7ef;text-align:center;">${ot}</td>
+            </tr>`;
+            rowAlt=!rowAlt;
+        }
+        htmlContent+=`</tbody></table>`;
+
+        // Speaker table
+        if(Object.keys(stats.bySpeaker).length){
+            htmlContent+=`<h3 style="font-family:Arial,sans-serif;font-size:13px;color:#555;margin:0 0 8px;letter-spacing:0.05em;text-transform:uppercase;">Speaker Breakdown</h3>`;
+            htmlContent+=`<table cellpadding="10" cellspacing="0" style="border-collapse:collapse;width:100%;max-width:560px;font-family:Arial,sans-serif;font-size:12px;">`;
+            htmlContent+=`<thead><tr style="background:#37474f;color:#fff;">
+                <th style="text-align:left;padding:10px 12px;">Speaker</th>
+                <th style="padding:10px 12px;">Used</th>
+                <th style="padding:10px 12px;">Left</th>
+                <th style="padding:10px 12px;">Overtime</th>
+            </tr></thead><tbody>`;
+            rowAlt=false;
+            for(let spk in stats.bySpeaker){
+                let sd=stats.bySpeaker[spk];
+                if(!sd.speeches.had) continue;
+                let ot=sd.speeches.over>0?`<span style="color:#c62828;font-weight:bold">${formatTime(sd.speeches.over)}</span>`:'-';
+                let rowBg=rowAlt?'#f5f5f5':'#ffffff';
+                htmlContent+=`<tr style="background:${rowBg};">
+                    <td style="padding:10px 12px;border-bottom:1px solid #e0e0e0;font-weight:bold;color:#1a1a2e;">${spk}</td>
+                    <td style="padding:10px 12px;border-bottom:1px solid #e0e0e0;text-align:center;">${formatTime(sd.speeches.used)} <span style="color:#888">/ ${formatTime(sd.speeches.had)}</span></td>
+                    <td style="padding:10px 12px;border-bottom:1px solid #e0e0e0;text-align:center;font-weight:bold;color:#1565c0;">${formatTime(sd.speeches.unused)}</td>
+                    <td style="padding:10px 12px;border-bottom:1px solid #e0e0e0;text-align:center;">${ot}</td>
+                </tr>`;
+                rowAlt=!rowAlt;
+            }
+            htmlContent+=`</tbody></table>`;
+        }
+        htmlContent+=`</div>`;
+    }
+    htmlContent+=`</div>`;
+
+    let el=document.createElement('div');
+    el.innerHTML=htmlContent; el.style.cssText='position:fixed;left:-9999px;top:0';
+    document.body.appendChild(el);
+    let range=document.createRange(); range.selectNodeContents(el);
+    let sel=window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+    try{document.execCommand('copy');triggerFlash(null,'Copied!','rgba(52,199,123,0.92)');}
+    catch(e){triggerFlash(null,'FAILED','rgba(240,82,79,0.92)');}
+    sel.removeAllRanges(); document.body.removeChild(el);
+}
+
+function customConfirm(title,message) {
+    return new Promise(res=>{
+        document.getElementById('confirm-title').innerText=title;
+        document.getElementById('confirm-message').innerText=message;
+        openModal('confirm-modal');
+        const cleanup=()=>closeModal('confirm-modal');
+        document.getElementById('confirm-ok').onclick=()=>{cleanup();res(true);};
+        document.getElementById('confirm-cancel').onclick=()=>{cleanup();res(false);};
+    });
+}
+
+async function resetPrepTimer(id){if(await customConfirm('Reset Prep Time','Reset this prep time pool?'))resetTimer(id);}
+async function globalReset(){
+    if(await customConfirm('Reset Round','Reset everything? All times, names, and notes will be cleared.')){
+        if(appData.interval){clearInterval(appData.interval);appData.interval=null;}
+        appData.activeStageId=null;appData.notes={};
+        appData.stages.forEach(s=>{s.timeRemaining=s.durationSeconds;s.status='pending';});
+        appData.prepPools.forEach(p=>{p.timeRemaining=p.durationSeconds;p.status='pending';});
+        clearSavedState();
+        if(currentFormat==='pf'||currentFormat==='pf_ms'){['t1s1','t1s2','t2s1','t2s2','t1-code','t2-code','pf-resolution'].forEach(id=>{let el=document.getElementById(id);if(el)el.value='';});document.getElementById('t1-side').value='Pro';updatePFNames();}
+        else if(currentFormat==='policy'){['cx-a1','cx-a2','cx-n1','cx-n2','cx-a-code','cx-n-code','cx-resolution'].forEach(id=>{let el=document.getElementById(id);if(el)el.value='';});updatePolicyNames();}
+        else renderUI();
+    }
+}
+
+// MODALS
+function openModal(id){document.getElementById(id).style.display='flex';}
+function closeModal(id){document.getElementById(id).style.display='none';}
+
+window.onclick=e=>{
+    ['analytics-modal','coin-modal','instructions-modal'].forEach(id=>{if(e.target===document.getElementById(id))closeModal(id);});
+    let cm=document.getElementById('confirm-modal');
+    if(e.target===cm) document.getElementById('confirm-cancel').click();
+};
+
+function openCoinModal(){
+    openModal('coin-modal');
+    document.getElementById('coin-result-text').innerText='';
+    let coin=document.getElementById('coin-inner');
+    coin.style.transition='none'; coin.style.transform='rotateY(0deg)'; coinFlips=0;
+    document.getElementById('coin-front').style.cssText='background:radial-gradient(circle at 35% 35%,#2e3548,#1a1f2e);color:var(--text-muted);border:6px solid var(--border-bright);box-shadow:none';
+    document.getElementById('coin-front').innerText='?';
+    document.getElementById('coin-back').style.cssText='background:radial-gradient(circle at 35% 35%,#2e3548,#1a1f2e);color:var(--text-muted);border:6px solid var(--border-bright)';
+    document.getElementById('coin-back').innerText='?';
+    void coin.offsetWidth;
+}
+
+function triggerCoinFlip(){
+    initAudio(); playCoinSound();
+    let coin=document.getElementById('coin-inner'),res=document.getElementById('coin-result-text');
+    let front=document.getElementById('coin-front'),back=document.getElementById('coin-back');
+    front.style.cssText=''; front.className='coin-face coin-heads'; front.innerText='HEADS';
+    back.style.cssText=''; back.className='coin-face coin-tails'; back.innerText='TAILS';
+    coin.style.transition='transform 2s cubic-bezier(0.4,0.2,0.2,1)';
+    res.style.color='var(--text-muted)'; res.innerText='Flipping…';
+    let isHeads=Math.random()<0.5; coinFlips+=5;
+    coin.style.transform=`rotateY(${coinFlips*360+(isHeads?0:180)}deg)`;
+    setTimeout(()=>{res.style.color='var(--gold)';res.innerText=isHeads?'HEADS ↑':'TAILS ↓';},2000);
+}
+
+function openInstructions(){openModal('instructions-modal');}
+function closeInstructions(){closeModal('instructions-modal');}
+
+document.addEventListener('keydown',e=>{
+    if(e.code==='Space'&&appData.activeStageId){
+        let tag=e.target.tagName.toUpperCase();
+        if(tag!=='INPUT'&&tag!=='TEXTAREA'&&tag!=='BUTTON'&&tag!=='SELECT'){e.preventDefault();toggleTimer(appData.activeStageId);}
+    }
+});
+
+// ── PERSISTENCE ──────────────────────────────────────────────────────────────
+const STATE_KEY = 'muellerDebateTimer_v1';
+
+function saveState() {
+    if (!appData.stages.length) return;
+    try {
+        let state = {
+            format: currentFormat,
+            stages: appData.stages.map(s=>({id:s.id,name:s.name,side:s.side,speakerName:s.speakerName,speakerPos:s.speakerPos,durationSeconds:s.durationSeconds,timeRemaining:s.timeRemaining,status:s.status==='active'?'paused':s.status,script:s.script})),
+            prepPools: appData.prepPools.map(p=>({id:p.id,name:p.name,side:p.side,durationSeconds:p.durationSeconds,timeRemaining:p.timeRemaining,status:p.status==='active'?'paused':p.status})),
+            notes: appData.notes,
+            globalFlowEnabled: appData.globalFlowEnabled,
+            fields: getFormFields()
+        };
+        localStorage.setItem(STATE_KEY, JSON.stringify(state));
+    } catch(e) {}
+}
+
+// Autosave every 3 seconds regardless of activity
+setInterval(saveState, 3000);
+
+function getFormFields() {
+    let fields = {};
+    ['pf-resolution','t1-code','t2-code','t1s1','t1s2','t2s1','t2s2',
+     'cx-resolution','cx-a-code','cx-n-code','cx-a1','cx-a2','cx-n1','cx-n2'].forEach(id=>{
+        let el = document.getElementById(id);
+        if (el) fields[id] = el.value;
+    });
+    let t1side = document.getElementById('t1-side');
+    if (t1side) fields['t1-side'] = t1side.value;
+    return fields;
+}
+
+function restoreFormFields(fields) {
+    if (!fields) return;
+    Object.entries(fields).forEach(([id, val]) => {
+        let el = document.getElementById(id);
+        if (el) el.value = val;
+    });
+    // update t2 side display
+    let t1side = document.getElementById('t1-side');
+    let t2display = document.getElementById('t2-side-display');
+    if (t1side && t2display) t2display.innerText = t1side.value === 'Pro' ? 'Con' : 'Pro';
+}
+
+function restoreState() {
+    try {
+        let raw = localStorage.getItem(STATE_KEY);
+        if (!raw) return false;
+        let state = JSON.parse(raw);
+        if (!state.stages || !state.stages.length) return false;
+        currentFormat = state.format || 'pf';
+        document.getElementById('format-select').value = currentFormat;
+        // show/hide panels
+        let isPF = currentFormat==='pf'||currentFormat==='pf_ms';
+        let isPolicy = currentFormat==='policy';
+        document.getElementById('pf-panel').style.display = isPF ? 'block' : 'none';
+        document.getElementById('policy-panel').style.display = isPolicy ? 'block' : 'none';
+        // restore form fields first so names show correctly
+        restoreFormFields(state.fields);
+        // restore data
+        appData.stages = state.stages;
+        appData.prepPools = state.prepPools || [];
+        appData.notes = state.notes || {};
+        appData.activeStageId = null;
+        appData.interval = null;
+        appData.globalFlowEnabled = state.globalFlowEnabled !== undefined ? state.globalFlowEnabled : true;
+        // sync flow toggle
+        let flowToggle = document.getElementById('flow-toggle');
+        if (flowToggle) flowToggle.checked = appData.globalFlowEnabled;
+        let btn = document.getElementById('btn-copy-flow');
+        if (btn) { btn.disabled=!appData.globalFlowEnabled; btn.style.opacity=appData.globalFlowEnabled?'1':'0.4'; btn.style.cursor=appData.globalFlowEnabled?'pointer':'not-allowed'; }
+        // show prep section if needed
+        if (appData.prepPools.length) document.getElementById('prep-section').style.display='block';
+        renderUI();
+        updateTimerDisplays();
+        showToast('↩ Previous round state restored.');
+        return true;
+    } catch(e) { return false; }
+}
+
+function clearSavedState() {
+    try { localStorage.removeItem(STATE_KEY); } catch(e) {}
+}
+
+// Also save immediately before page unload (catches refreshes between autosave intervals)
+window.addEventListener('beforeunload', saveState);
+
+// ── SCROLL → STICKY TIMER ────────────────────────────────────────────────────
+window.addEventListener('scroll', () => {
+    let banner = document.getElementById('time-banner-anchor');
+    let sticky = document.getElementById('sticky-timer');
+    if (!banner || !sticky) return;
+    let rect = banner.getBoundingClientRect();
+    sticky.classList.toggle('visible', rect.bottom < 0);
+});
+
+window.onload = () => {
+    if (!restoreState()) {
+        loadFormat('pf');
+    }
+};
 </script>
-
 </body>
 </html>
