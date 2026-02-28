@@ -1862,23 +1862,22 @@ function parseSWText(raw) {
     let teams = [];
     for (let line of lines) {
         // Match optional leading code (numeric OR alphanumeric like CC05) then "Name and Name"
-        let m = line.match(/^([A-Za-z0-9]+)s+(.+?)s+ands+(.+)$/i);
+        let m = line.match(/^([A-Za-z0-9]+)\s+(.+?)\s+and\s+(.+)$/i);
         if (m) {
             let token = m[1];
             // Treat as a team code if purely numeric OR mixed letters+digits (e.g. CC05, WW14)
-            let isCode = /^d+$/.test(token) || (/[A-Za-z]/.test(token) && /d/.test(token));
+            let isCode = /^\d+$/.test(token) || (/[A-Za-z]/.test(token) && /\d/.test(token));
             if (isCode) {
                 teams.push({ code: token, s1: m[2].trim(), s2: m[3].trim() });
                 continue;
             }
         }
         // No code — whole line is "Name and Name"
-        let m2 = line.match(/^(.+?)s+ands+(.+)$/i);
+        let m2 = line.match(/^(.+?)\s+and\s+(.+)$/i);
         if (m2) {
             teams.push({ code: '', s1: m2[1].trim(), s2: m2[2].trim() });
         }
     }
-    return teams;
     return teams;
 }
 
@@ -1982,6 +1981,7 @@ function swapPFTeams() {
 }
 
 function copyPFSetup() {
+    let resolution = document.getElementById('pf-resolution')?.value.trim() || '';
     let t1side = document.getElementById('t1-side')?.value || 'Pro';
     let t2side = t1side === 'Pro' ? 'Con' : 'Pro';
     let t1code = document.getElementById('t1-code')?.value.trim() || '';
