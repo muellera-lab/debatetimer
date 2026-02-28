@@ -1365,9 +1365,15 @@
                     Flip Coin
                 </button>
             </div>
-            <div class="pf-body-inner">
+            <div class="pf-body-inner" id="pf-body-inner">
                 <div class="pf-team">
-                    <h4>Team 1 · First Team Speaking</h4>
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                        <h4 style="margin:0;">Team 1 · First Team Speaking</h4>
+                        <button onclick="swapT1Speakers()" title="Swap speaker order within Team 1" style="display:flex;align-items:center;gap:4px;background:none;border:1px solid var(--border);border-radius:6px;color:var(--text-muted);font-family:var(--sans);font-size:0.7rem;font-weight:600;padding:4px 8px;cursor:pointer;transition:all 0.2s;" onmouseenter="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'" onmouseleave="this.style.borderColor='';this.style.color=''">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 16V4m0 0L3 8m4-4 4 4"/><path d="M17 8v12m0 0 4-4m-4 4-4-4"/></svg>
+                            Swap Speakers
+                        </button>
+                    </div>
                     <div class="pf-field">
                         <label>Team Code</label>
                         <input type="text" id="t1-code" placeholder="e.g. CC02" oninput="updatePFNames()">
@@ -1389,7 +1395,13 @@
                     </div>
                 </div>
                 <div class="pf-team">
-                    <h4>Team 2 · Second Team Speaking</h4>
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                        <h4 style="margin:0;">Team 2 · Second Team Speaking</h4>
+                        <button onclick="swapT2Speakers()" title="Swap speaker order within Team 2" style="display:flex;align-items:center;gap:4px;background:none;border:1px solid var(--border);border-radius:6px;color:var(--text-muted);font-family:var(--sans);font-size:0.7rem;font-weight:600;padding:4px 8px;cursor:pointer;transition:all 0.2s;" onmouseenter="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'" onmouseleave="this.style.borderColor='';this.style.color=''">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 16V4m0 0L3 8m4-4 4 4"/><path d="M17 8v12m0 0 4-4m-4 4-4-4"/></svg>
+                            Swap Speakers
+                        </button>
+                    </div>
                     <div class="pf-field">
                         <label>Team Code</label>
                         <input type="text" id="t2-code" placeholder="e.g. WW14" oninput="updatePFNames()">
@@ -1407,6 +1419,16 @@
                         <input type="text" id="t2s2" placeholder="Name" oninput="updatePFNames()">
                     </div>
                 </div>
+            </div>
+            <!-- Speechwire import + swap row — sits below the two team columns -->
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px;padding:12px 16px 4px;border-top:1px solid var(--border);">
+                <button onclick="openSWParser()" style="display:flex;align-items:center;gap:7px;background:var(--surface3);border:1px solid var(--border-bright);border-radius:var(--radius-sm);color:var(--text-dim);font-family:var(--sans);font-size:0.78rem;font-weight:600;padding:7px 13px;cursor:pointer;transition:all 0.2s;" onmouseenter="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'" onmouseleave="this.style.borderColor='';this.style.color=''">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                    Import from Speechwire
+                </button>
+                <button onclick="swapPFTeams()" style="display:flex;align-items:center;gap:6px;background:var(--surface3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-muted);font-family:var(--sans);font-size:0.78rem;font-weight:600;padding:7px 13px;cursor:pointer;transition:all 0.2s;" onmouseenter="this.style.borderColor='var(--blue)';this.style.color='var(--blue)'" onmouseleave="this.style.borderColor='';this.style.color=''">
+                    ⇄ Swap Which Team Speaks First
+                </button>
             </div>
         </div>
     </div>
@@ -1490,6 +1512,26 @@
 <!-- FLASH -->
 <div id="flash-overlay" class="flash-overlay">
     <div id="flash-text" class="flash-text"></div>
+</div>
+
+<!-- SPEECHWIRE PARSER MODAL -->
+<div id="sw-parser-modal" class="modal-overlay" style="display:none">
+    <div class="modal-box" style="max-width:480px;width:92%;">
+        <div class="modal-header">
+            <div class="modal-title">Import from Speechwire</div>
+            <button class="modal-close" onclick="closeModal('sw-parser-modal')">✕</button>
+        </div>
+        <div style="padding:20px 24px 24px;">
+            <p style="font-size:0.82rem;color:var(--text-dim);margin-bottom:14px;line-height:1.55;">Paste the debater listing from your Speechwire ballot. Each team should be on its own line in the format:<br><span style="font-family:var(--mono);font-size:0.78rem;color:var(--text-muted);display:block;margin-top:6px;">339 Joe Schmo and Jane Doe<br>CC05 John Smith and Mary Johnson</span></p>
+            <textarea id="sw-paste-area" placeholder="Paste Speechwire text here…" style="width:100%;height:110px;background:var(--surface3);border:1px solid var(--border-bright);border-radius:var(--radius-sm);color:var(--text);font-family:var(--mono);font-size:0.82rem;padding:10px 12px;outline:none;resize:vertical;line-height:1.5;transition:border-color 0.2s;" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor=''"></textarea>
+            <div id="sw-parse-error" style="display:none;color:var(--red);font-size:0.78rem;margin-top:8px;"></div>
+            <div id="sw-parse-preview" style="display:none;margin-top:14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;font-size:0.8rem;color:var(--text-dim);line-height:1.7;"></div>
+            <div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end;">
+                <button onclick="closeModal('sw-parser-modal')" class="btn btn-ghost">Cancel</button>
+                <button onclick="parseSpeechwire()" style="background:var(--gold);color:#0a0c12;border:none;border-radius:var(--radius-sm);font-family:var(--sans);font-weight:700;font-size:0.85rem;padding:10px 20px;cursor:pointer;transition:all 0.2s;">Import</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- ANALYTICS MODAL -->
@@ -1800,8 +1842,146 @@ function getPolicyStages() {
     };
 }
 
+function openSWParser() {
+    document.getElementById('sw-paste-area').value = '';
+    document.getElementById('sw-parse-error').style.display = 'none';
+    document.getElementById('sw-parse-preview').style.display = 'none';
+    openModal('sw-parser-modal');
+    setTimeout(() => document.getElementById('sw-paste-area').focus(), 100);
+}
+
+function parseSWText(raw) {
+    // Accepts lines like:
+    //   339 Joe Schmo and Jane Doe
+    //   339 Joe Schmo and Jane Doe (or similar with extra whitespace)
+    // Returns array of {code, s1, s2} objects
+    let lines = raw.split('\n')
+        .map(l => l.trim())
+        .filter(l => l.length > 0);
+
+    let teams = [];
+    for (let line of lines) {
+        // Match optional leading code (numeric OR alphanumeric like CC05) then "Name and Name"
+        let m = line.match(/^([A-Za-z0-9]+)s+(.+?)s+ands+(.+)$/i);
+        if (m) {
+            let token = m[1];
+            // Treat as a team code if purely numeric OR mixed letters+digits (e.g. CC05, WW14)
+            let isCode = /^d+$/.test(token) || (/[A-Za-z]/.test(token) && /d/.test(token));
+            if (isCode) {
+                teams.push({ code: token, s1: m[2].trim(), s2: m[3].trim() });
+                continue;
+            }
+        }
+        // No code — whole line is "Name and Name"
+        let m2 = line.match(/^(.+?)s+ands+(.+)$/i);
+        if (m2) {
+            teams.push({ code: '', s1: m2[1].trim(), s2: m2[2].trim() });
+        }
+    }
+    return teams;
+    return teams;
+}
+
+function parseSpeechwire() {
+    let raw = document.getElementById('sw-paste-area').value;
+    let errEl = document.getElementById('sw-parse-error');
+    let previewEl = document.getElementById('sw-parse-preview');
+    errEl.style.display = 'none';
+    previewEl.style.display = 'none';
+
+    let teams = parseSWText(raw);
+
+    if (teams.length === 0) {
+        errEl.textContent = 'Could not parse any teams. Make sure each line has two names separated by "and".';
+        errEl.style.display = 'block';
+        return;
+    }
+    if (teams.length > 2) {
+        // Take first two
+        teams = teams.slice(0, 2);
+    }
+    if (teams.length < 2) {
+        errEl.textContent = 'Found only one team. Paste both teams to fill all fields, or continue to fill in Team 2 manually.';
+        errEl.style.display = 'block';
+        // Still proceed with what we have
+    }
+
+    // Populate team 1
+    let t1 = teams[0];
+    document.getElementById('t1-code').value = t1.code;
+    document.getElementById('t1s1').value = t1.s1;
+    document.getElementById('t1s2').value = t1.s2;
+
+    // Populate team 2 if present
+    if (teams[1]) {
+        let t2 = teams[1];
+        document.getElementById('t2-code').value = t2.code;
+        document.getElementById('t2s1').value = t2.s1;
+        document.getElementById('t2s2').value = t2.s2;
+    }
+
+    updatePFNames();
+
+    // Show preview
+    let prev = `<strong style="color:var(--text)">Team 1 (First Speaking):</strong> ${t1.code ? '[' + t1.code + '] ' : ''}${t1.s1} &amp; ${t1.s2}`;
+    if (teams[1]) {
+        let t2 = teams[1];
+        prev += `<br><strong style="color:var(--text)">Team 2 (Second Speaking):</strong> ${t2.code ? '[' + t2.code + '] ' : ''}${t2.s1} &amp; ${t2.s2}`;
+    }
+    previewEl.innerHTML = '✓ &nbsp;' + prev;
+    previewEl.style.display = 'block';
+
+    // Auto-close after a beat if both teams parsed cleanly
+    if (teams.length >= 2) {
+        setTimeout(() => closeModal('sw-parser-modal'), 1200);
+        showToast('✓ Teams imported from Speechwire');
+    }
+}
+
+function swapT1Speakers() {
+    let a = document.getElementById('t1s1').value;
+    let b = document.getElementById('t1s2').value;
+    document.getElementById('t1s1').value = b;
+    document.getElementById('t1s2').value = a;
+    updatePFNames();
+    showToast('⇅ Team 1 speakers swapped');
+}
+
+function swapT2Speakers() {
+    let a = document.getElementById('t2s1').value;
+    let b = document.getElementById('t2s2').value;
+    document.getElementById('t2s1').value = b;
+    document.getElementById('t2s2').value = a;
+    updatePFNames();
+    showToast('⇅ Team 2 speakers swapped');
+}
+
+function swapPFTeams() {
+    // Swap codes
+    let t1code = document.getElementById('t1-code').value;
+    let t2code = document.getElementById('t2-code').value;
+    // Swap speakers
+    let t1s1 = document.getElementById('t1s1').value;
+    let t1s2 = document.getElementById('t1s2').value;
+    let t2s1 = document.getElementById('t2s1').value;
+    let t2s2 = document.getElementById('t2s2').value;
+    // Swap side
+    let t1side = document.getElementById('t1-side').value;
+
+    document.getElementById('t1-code').value = t2code;
+    document.getElementById('t2-code').value = t1code;
+    document.getElementById('t1s1').value = t2s1;
+    document.getElementById('t1s2').value = t2s2;
+    document.getElementById('t2s1').value = t1s1;
+    document.getElementById('t2s2').value = t1s2;
+    // Flip side too
+    document.getElementById('t1-side').value = t1side === 'Pro' ? 'Con' : 'Pro';
+
+    updatePFNames();
+    showToast('⇅ Speaking order swapped');
+}
+
 function copyPFSetup() {
-    let resolution = document.getElementById('pf-resolution')?.value.trim() || '';
     let t1side = document.getElementById('t1-side')?.value || 'Pro';
     let t2side = t1side === 'Pro' ? 'Con' : 'Pro';
     let t1code = document.getElementById('t1-code')?.value.trim() || '';
@@ -2356,7 +2536,7 @@ function openModal(id){document.getElementById(id).style.display='flex';}
 function closeModal(id){document.getElementById(id).style.display='none';}
 
 window.onclick=e=>{
-    ['analytics-modal','coin-modal','instructions-modal'].forEach(id=>{if(e.target===document.getElementById(id))closeModal(id);});
+    ['analytics-modal','coin-modal','instructions-modal','sw-parser-modal'].forEach(id=>{if(e.target===document.getElementById(id))closeModal(id);});
     let cm=document.getElementById('confirm-modal');
     if(e.target===cm) document.getElementById('confirm-cancel').click();
 };
