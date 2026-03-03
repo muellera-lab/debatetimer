@@ -1210,6 +1210,33 @@
             line-height: 1;
         }
 
+        /* ─── PERIPHERAL TIMER ALERTS ─── */
+        @keyframes cardGlow30 {
+            0%   { box-shadow: 0 0 0 0 rgba(240,180,41,0); border-color: var(--border); }
+            25%  { box-shadow: 0 0 0 8px rgba(240,180,41,0.5), 0 0 32px rgba(240,180,41,0.3); border-color: rgba(240,180,41,0.8); }
+            55%  { box-shadow: 0 0 0 8px rgba(240,180,41,0.5), 0 0 32px rgba(240,180,41,0.3); border-color: rgba(240,180,41,0.8); }
+            100% { box-shadow: 0 0 0 0 rgba(240,180,41,0); border-color: var(--border); }
+        }
+        @keyframes cardGlow0 {
+            0%   { box-shadow: 0 0 0 0 rgba(240,82,79,0); border-color: var(--border); }
+            20%  { box-shadow: 0 0 0 10px rgba(240,82,79,0.6), 0 0 40px rgba(240,82,79,0.4); border-color: rgba(240,82,79,0.9); }
+            40%  { box-shadow: 0 0 0 4px rgba(240,82,79,0.3); border-color: rgba(240,82,79,0.5); }
+            60%  { box-shadow: 0 0 0 10px rgba(240,82,79,0.6), 0 0 40px rgba(240,82,79,0.4); border-color: rgba(240,82,79,0.9); }
+            100% { box-shadow: 0 0 0 0 rgba(240,82,79,0); border-color: var(--border); }
+        }
+        @keyframes bannerFlash30 {
+            0%,100% { background: var(--surface); }
+            30%, 60% { background: rgba(240,180,41,0.18); }
+        }
+        @keyframes bannerFlash0 {
+            0%,100% { background: var(--surface); }
+            25%, 50%, 75% { background: rgba(240,82,79,0.2); }
+        }
+        .card-glow-30 { animation: cardGlow30 1.4s ease forwards !important; }
+        .card-glow-0  { animation: cardGlow0  1.6s ease forwards !important; }
+        .banner-flash-30 { animation: bannerFlash30 1.4s ease forwards !important; }
+        .banner-flash-0  { animation: bannerFlash0  1.6s ease forwards !important; }
+
         /* ─── TOAST ─── */
         .toast {
             position: fixed;
@@ -1522,7 +1549,7 @@
             <button class="modal-close" onclick="closeModal('sw-parser-modal')">✕</button>
         </div>
         <div style="padding:20px 24px 24px;">
-            <p style="font-size:0.82rem;color:var(--text-dim);margin-bottom:14px;line-height:1.55;">Paste the debater listing from your Speechwire ballot. Each team should be on its own line in the format:<br><span style="font-family:var(--mono);font-size:0.78rem;color:var(--text-muted);display:block;margin-top:6px;">339 Joe Schmo and Jane Doe<br>CC05 John Smith and Mary Johnson</span></p>
+            <p style="font-size:0.82rem;color:var(--text-dim);margin-bottom:14px;line-height:1.55;">Paste the debater listing from your Speechwire ballot. Each team should be on its own line in the format:<br><span style="font-family:var(--mono);font-size:0.78rem;color:var(--text-muted);display:block;margin-top:6px;">339 Ivana Turn and Dee Link<br>CC05 Layla Judge and Ira Buttal</span></p>
             <textarea id="sw-paste-area" placeholder="Paste Speechwire text here…" style="width:100%;height:110px;background:var(--surface3);border:1px solid var(--border-bright);border-radius:var(--radius-sm);color:var(--text);font-family:var(--mono);font-size:0.82rem;padding:10px 12px;outline:none;resize:vertical;line-height:1.5;transition:border-color 0.2s;" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor=''"></textarea>
             <div id="sw-parse-error" style="display:none;color:var(--red);font-size:0.78rem;margin-top:8px;"></div>
             <div id="sw-parse-preview" style="display:none;margin-top:14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;font-size:0.8rem;color:var(--text-dim);line-height:1.7;"></div>
@@ -1764,23 +1791,52 @@ function playCoinSound() {
 }
 
 function triggerFlash(seconds, customText=null, customColor=null) {
-    const overlay = document.getElementById('flash-overlay');
-    const textElem = document.getElementById('flash-text');
     if (customText) {
+        // Custom messages (NO NOTES, Copied!, etc) still use full-screen overlay
+        const overlay = document.getElementById('flash-overlay');
+        const textElem = document.getElementById('flash-text');
         overlay.style.backgroundColor = customColor || 'rgba(74,144,217,0.92)';
         textElem.innerText = customText;
         textElem.style.fontSize = customText.length > 10 ? 'clamp(32px,6vw,72px)' : '';
-    } else if (seconds === 30) {
-        overlay.style.backgroundColor = 'rgba(240,180,41,0.92)';
-        textElem.innerText = '30s';
-        textElem.style.fontSize = '';
-    } else if (seconds === 0) {
-        overlay.style.backgroundColor = 'rgba(240,82,79,0.92)';
-        textElem.innerText = '0s';
-        textElem.style.fontSize = '';
-    } else return;
-    overlay.classList.add('show');
-    setTimeout(() => overlay.classList.remove('show'), 1500);
+        overlay.classList.add('show');
+        setTimeout(() => overlay.classList.remove('show'), 1500);
+        return;
+    }
+
+    // Timer alerts: peripheral glow on active card + banner flash — no center obstruction
+    const glowClass = seconds === 30 ? 'card-glow-30' : seconds === 0 ? 'card-glow-0' : null;
+    const bannerClass = seconds === 30 ? 'banner-flash-30' : seconds === 0 ? 'banner-flash-0' : null;
+    if (!glowClass) return;
+
+    // Pulse the active stage card
+    if (appData.activeStageId) {
+        const cardEl = document.getElementById('card-' + appData.activeStageId) ||
+            document.querySelector(`[data-id="${appData.activeStageId}"]`);
+        if (cardEl) {
+            cardEl.classList.remove('card-glow-30','card-glow-0');
+            void cardEl.offsetWidth; // reflow to restart animation
+            cardEl.classList.add(glowClass);
+            setTimeout(() => cardEl.classList.remove(glowClass), 1700);
+        }
+    }
+
+    // Pulse the time banner
+    const banner = document.getElementById('time-banner-anchor');
+    if (banner) {
+        banner.classList.remove('banner-flash-30','banner-flash-0');
+        void banner.offsetWidth;
+        banner.classList.add(bannerClass);
+        setTimeout(() => banner.classList.remove(bannerClass), 1700);
+    }
+
+    // Also pulse the sticky timer if visible
+    const sticky = document.getElementById('sticky-timer');
+    if (sticky && sticky.classList.contains('visible')) {
+        sticky.classList.remove('banner-flash-30','banner-flash-0');
+        void sticky.offsetWidth;
+        sticky.classList.add(bannerClass);
+        setTimeout(() => sticky.classList.remove(bannerClass), 1700);
+    }
 }
 
 function formatTime(s) {
@@ -2269,7 +2325,7 @@ function renderUI() {
         let flow=(appData.globalFlowEnabled&&!isExtemprep)?`<div class="flow-drawer"><textarea id="flow_${s.id}" oninput="updateNote('${s.id}',this.value)" placeholder="Flow notes for this speech…">${appData.notes[s.id]||''}</textarea></div>`:'';
 
         let cardClass=`stage-card ${s.status}${isNext&&s.status!=='active'?' next-up':''}${isLocked?' locked':''}`;
-        return `<div class="${cardClass}">
+        return `<div id="card-${s.id}" class="${cardClass}">
             <div class="accent-bar"></div>
             <div class="progress-track"><div class="progress-fill" id="fill_${s.id}" style="width:${pct}%"></div></div>
             <div class="card-row">
